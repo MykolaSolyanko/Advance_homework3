@@ -204,11 +204,12 @@ public:
     capacity = new_size;
     T *tmp_arr = new T[capacity]{};
     if constexpr (std::is_arithmetic<T>::value) {
-      std::memcpy(tmp_arr, data, size);
-      return;
+      std::memcpy(tmp_arr, data, sizeof(T)*size);
     }
-    for (size_t i{}; i != size; i++) {
-      tmp_arr[i] = std::move(data[i]);
+    else {
+      for (size_t i{}; i != size; i++) {
+       tmp_arr[i] = std::move(data[i]);
+      }
     }
     data = tmp_arr;
   }
