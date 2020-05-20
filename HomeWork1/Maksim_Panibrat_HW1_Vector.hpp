@@ -191,10 +191,28 @@ public:
     size -= erase_distance;
   }
 
-  void reserve(size_t new_cap) {
-    data = (T *)std::malloc(new_cap * sizeof(T));
-    // it's not ok?
+void reserve(size_t new_cap) {
+  std::cout << __FUNCTION__ << std::endl;
+
+  T *tmp_arr = (T *)std::malloc(new_cap * sizeof(T));
+  if (tmp_arr == nullptr) {
+    std::cout << "alloc failure\n";
+    exit('a');
   }
+
+  tmp_arr = new (tmp_arr) T[capacity];
+  // is it greater than just: tmp_arr = new T[capacity] ?
+
+  if constexpr (std::is_arithmetic<T>::value) {
+    std::memcpy(tmp_arr, data, sizeof(T) * size);
+  } else {
+    for (size_t i{}; i != size; i++) {
+      tmp_arr[i] = std::move(data[i]);
+    }
+  }
+  data = tmp_arr;
+}
+
 
   void resize(size_t new_size) {
     std::cout << __FUNCTION__ << std::endl;
