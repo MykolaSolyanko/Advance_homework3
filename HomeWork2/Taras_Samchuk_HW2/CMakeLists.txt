@@ -5,9 +5,8 @@ set(CMAKE_CXX_COMPILER "clang++")
 
 add_compile_options(
   -Wall 
-  # -std=c++17
-  # -Wextra 
-  # -Wpedantic 
+  -Wextra 
+  -Wpedantic 
   # -Werror 
   -O3
   ) 
