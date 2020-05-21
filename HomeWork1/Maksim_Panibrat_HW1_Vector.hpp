@@ -112,17 +112,9 @@ public:
     size++;
   }
 
-  void emplace_back(T value) {
+  template <typename... Rest> void emplace_back(Rest... rest) {
     std::cout << __FUNCTION__ << std::endl;
-    push_back(value);
-  }
-
-  // programm requiers send type for typename ... Rest from main for every
-  // non-arithmetic element, how to fix it?
-  template <typename... Rest> void emplace_back(T value, Rest... rest) {
-    std::cout << __FUNCTION__ << std::endl;
-    push_back(value);
-    emplace_back(rest...);
+    push_back(T{rest...});
   }
 
   void insert(size_t pos, T value) {
@@ -145,7 +137,6 @@ public:
 
     size_t i{};
     for (; i != pos; i++) {
-      std::cout << i;
       tmp_arr[i] = std::move(data[i]);
     }
     for (; i != size; i++) {
@@ -260,8 +251,13 @@ void reserve(size_t new_cap) {
       if constexpr (std::is_same<std::pair<bool, const char *>, T>::value) {
         print_pair();
         return;
-      } else if constexpr (std::is_arithmetic<T>::value) {
+      }
+      else if constexpr (std::is_arithmetic<T>::value) {
         print_arithmetic();
+        return;
+      }
+      else {
+        std::cout << "Cant print\n";
       }
     }
   }
