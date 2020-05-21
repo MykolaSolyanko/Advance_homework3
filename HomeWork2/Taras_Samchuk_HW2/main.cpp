@@ -1,8 +1,9 @@
 // #include "unique_ptr.hpp"
 #include <fstream>
 #include "../../HomeWork1/Taras_Samchuk_HW1/DEBUG1.code.hpp"
+#include "shared_ptr.hpp"
 #include "unique_ptr.hpp"
-int main(/* int argc, char const *argv[] */) {
+int main(int argc, char const *argv[]) {
   DEBUG;
   {
     LogMessage("UniquePtr<int> ptr1{new int{}}\n");
@@ -29,5 +30,33 @@ int main(/* int argc, char const *argv[] */) {
         "UniquePtr<int> ptr_copy{std::move(ptr)};   // compiler OK}\n");
     // UniquePtr<int> ptr_copy{ptr};             // compiler error
     UniquePtr<int> ptr_copy{std::move(ptr)};  // compiler OK}
-    return 0;
   }
+  //==================================================================
+  {
+    SharedPtr<int> ptr1{new int{}};  // use ~Shared_ptr() {delete ptr;}
+  }
+  {
+    // SharedPtr<int[]> ptr2{new int[200]{}};  // use ~Shared_ptr() {delete[] ptr;}
+  }
+
+  {
+    // auto file = fopen(file_name);
+    // SharedPtr<File> ptr{file, fclose};  // use ~Shared_ptr() {fclose(ptr);}
+  }
+
+  {
+    // SharedPtr<int> ptr_{new int{}};
+
+    // std::cout << ptr.count() << std::endl;  // print 1
+
+    // SharedPtr<int> ptr_copy{ptr};
+
+    // std::cout << ptr_copy.count() << std::endl;  // print 2
+    // SharedPtr<int> ptr_move{std::move(ptr)};
+
+    // std::cout << ptr_copy.count() << std::endl;  // print 2
+    // std::cout << ptr.count() << std::endl;       // print 0
+  }
+
+  return 0;
+};
