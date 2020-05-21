@@ -21,6 +21,7 @@ set (CPP_FILES
 
 set (HPP_FILES
   unique_ptr.hpp
+  shared_ptr.hpp
   )
 
 

@@ -2,25 +2,28 @@
 #include <iostream>
 
 template <typename T>
-struct Deleter {
+struct uDeleter {
  public:
-  typedef T* pointer;
-  void operator()(pointer t) const {
-    std::cout << "()-----------------\n";
-    delete t;
+  // typedef T* pointer;
+  void operator()(T* ptr){
+    std::cout<<"this is funcor -"<<ptr<<std::endl;
+    // std::cout << "()-----------------\n";
+    delete ptr;
   }
 };
-// template <typename T>
-// struct Deleter<T*> {
-//  public:
-//   typedef T* pointer;
-//   void operator()(pointer t) const {
-//     std::cout << "()-------[]----------\n";
-//     delete[] t;
-//   }
-// };
 
-template <typename T, typename F = Deleter<T>>
+template <typename T>
+struct uDeleter<T[]> {
+ public:
+  // typedef T* pointer;
+  void operator()(T* ptr) {
+    std::cout << "this is funcor []" << ptr << std::endl;
+    // std::cout << "()-----------------\n";
+    delete[] ptr;
+  }
+};
+
+template <typename T, typename F = uDeleter<T>>
 class UniquePtr;
 
 template <typename T, typename F>
@@ -64,8 +67,9 @@ class UniquePtr {
  private:
   pointer _ptr{nullptr};
   void free() {
-    F(_ptr);
     std::cout << __PRETTY_FUNCTION__ << std::endl;
+    F DELER;
+    DELER(_ptr);
   }
 };
 

@@ -2,16 +2,17 @@
 // #include <iostream>
 
 template <typename T>
-struct Deleter {
+struct sDeleter {
  public:
-  typedef T* pointer;
-  void operator()(pointer t) const {
-    std::cout << "()-----------------\n";
-    delete t;
-  }
+  void operator()(T* ptr) const { delete ptr; }
+};
+template <typename T>
+struct sDeleter<T[]> {
+ public:
+  void operator()(T* ptr) const { delete ptr; }
 };
 
-template <typename T, typename F = Deleter<T>>
+template <typename T, typename F = sDeleter<T>>
 class SharedPtr;
 
 template <typename T, typename F>
@@ -20,24 +21,25 @@ class SharedPtr {
   typedef T* pointer;
 
   SharedPtr() = default;  //?
-  SharedPtr(const SharedPtr& ptr){
-      _ptr=ptr._ptr;
-      _count=ptr._count;
-      _count++;
-      /* ++ */
-      //   _ptr= ptr
+  SharedPtr(const SharedPtr& ptr) {
+    _ptr = ptr._ptr;
+    _count = ptr._count;
+    _count++;
+    /* ++ */
+    //   _ptr= ptr
   };  //?
   SharedPtr& operator=(const SharedPtr&){/* ++ */};
-  SharedPtr(pointer ptr) { /* ++ */
-    // _ptr = ptr->_ptr;
-    // _count=ptr._count;
-    // _count++;
+  SharedPtr(pointer ptr){
+      /* ++ */
+      // _ptr = ptr->_ptr;
+      // _count=ptr._count;
+      // _count++;
   };
   SharedPtr& operator=(pointer ptr){
       /*code*/  //+
   };
 
-  SharedPtr(SharedPtr&& ptr){/* ++ */};
+  SharedPtr(SharedPtr&& ptr):_ptr(ptr._ptr),_count(ptr._count){};
 
   // Replaces the managed object with an object pointed to by ptr
   void reset() {
@@ -52,12 +54,12 @@ class SharedPtr {
     _ptr = ptr;
   };
   // Replaces the managed object with an object pointed to by ptr
-  void reset(pointer ptr, Deleter<T> del){};
+  void reset(pointer ptr, sDeleter<T> del){};
   // Returns the stored pointer.
   T* get() { return _ptr; };
   // Returns the number of different shared_ptr instances
   // managing the current object
-  long use_count() { return *_count; };
+  long count() { return _count; };
 
   // like get() != nullptr
   explicit operator bool() { return (_ptr != nullptr) ? true : false; };
@@ -68,11 +70,11 @@ class SharedPtr {
 
  private:
   pointer _ptr{nullptr};
-  long* _count{nullptr};
-  void free(){
-      if(_count){
-          /*code*/
-      };
+  long _count{};
+  void free() {
+    if (_count) {
+      /*code*/
+    };
       /* F(_ptr); */};
 };
 
