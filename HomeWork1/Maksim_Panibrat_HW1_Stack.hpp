@@ -34,17 +34,10 @@ public:
     return {true, vec.back()};
   }
 
-  void emplace(T value) {
-    std::cout << __FUNCTION__ << std::endl;
-    vec.push_back(value);
-  }
-  // programm requiers send type for typename ... Rest from main for every
-  // non-arithmetic element, how to fix it?
-  template <typename... Rest> void emplace(T value, Rest... rest) {
-    std::cout << __FUNCTION__ << std::endl;
-    vec.push_back(value);
-    emplace(rest...);
-  }
+template <typename... Rest> void emplace(Rest... rest) {
+  std::cout << __FUNCTION__ << std::endl;
+  vec.push_back(T{rest...});
+}
 
   const unsigned long long GetSize() { return vec.size_(); }
   const unsigned long long GetCapacity() { return vec.capacity_(); }
