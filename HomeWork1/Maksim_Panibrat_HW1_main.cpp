@@ -112,17 +112,28 @@ int main(int argc, char const *argv[]) {
     v7.analize();
 
     std::cout << "V7 emplace back\n";
-    v7.emplace_back<pair, pair>({true, "16"}, {false, "37"}, {true, "29"});
+    v7.emplace_back(true, "16");
+    v7.emplace_back(false, "34");
     v7.analize();
+    
     std::cout << "V7 clear\n";
-    Vector<pair> v8;
-    v8.analize();
-    v8.reserve(6);
-    v8.emplace_back<pair, pair, pair>({true, "16"}, {false, "37"}, {true, "29"},
-                                      {true, "16"});
-    v8.analize();
+    v7.clear();
+    v7.analize();
   }
+  
+  {
+   std::cout << "Reserve V8\n";
+   Vector<int> v8{1, 2, 3, 4, 5};
+   v8.analize();
+   v8.reserve(sizeof(int) * 10);
+   v8.analize();
+   std::cout << "V8 adress:\n" << &v8 << std::endl;
 
+   Vector<int> *v_ptr = new (&v8) Vector<int>{10, 11, 12, 13, 14};
+   td::cout << "v_ptr placement new v9 adress:\n" << v_ptr << std::endl;
+   v_ptr->analize();
+  }
+  
   {
     std::cout << "Stack-Adapter\n";
     Stack<pair, Vector<pair>> st;
