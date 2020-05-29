@@ -2,9 +2,13 @@
           vector.hpp by Sam4uk
 */
 #pragma once
-#include <cstring>   //+ size_t & memcpy
-#include <iterator>  //+std::distance
-#include <utility>   //+ std::initializer_list
+#include <cstring>    //+ size_t & memcpy
+#include <iterator>   //+ std::distance
+#include <stdexcept>  //+ std::logic_error
+#include <utility>    //+ std::initializer_list
+
+static constexpr size_t k_grow_factor{2};
+static constexpr size_t k_starting_size{2};
 
 template <class T>
 class Vector {
@@ -24,10 +28,16 @@ class Vector {
     }
   }
   Vector(T* begin, T* end) {
-    const size_t ItemsCount = std::distance(begin, end);
-    if (begin == nullptr || end == nullptr || ItemsCount <= 0) {
-      return;
+    if (begin == nullptr || end == nullptr || end <= begin) {
+      // return;
+      throw std::logic_error("Incorrect addressing of pointers");
     };
+
+    const size_t ItemsCount = std::distance(begin, end);
+
+    for (T* index{begin}; index != end; index++) {
+      _data[_count++] = *index++;
+    }
   };
   Vector(const Vector& other)
       : _capacity(other._capacity),
@@ -39,6 +49,7 @@ class Vector {
     return *this;
   };
   ~Vector() { delete[] _data; };
+
   Vector& operator=(const Vector& other) {
     delete[] _data;
     _capacity = other._capacity;
@@ -54,12 +65,18 @@ class Vector {
   T* begin() { return _data; };
   const T* end() { return (_data + _count); };
 
-  void push_back(T value) {
+  void push_front(T value) {
     if (_count >= _capacity - 1) {
-      resize(_capacity);
+      reserve(_capacity * k_grow_factor);
     }
     T* buffer = new T[_capacity];
-    memcpy(buffer + 1, _data, sizeof(T) * _count);
+    if (std::is_trivial<T>::value) {
+      memcpy(buffer + 1, _data, sizeof(T) * _count);
+    } else {
+      for (size_t index{0}; index < _count; index++) {
+        buffer[index + 1] = std::move(_data[index]);
+      }
+    }
     T* old = _data;
     _data = buffer;
     delete[] old;
@@ -67,12 +84,14 @@ class Vector {
     _count++;
   };
 
-  void push_front(T value) {
+  void push_back(T value) {
     if (_count == _capacity) {
-      resize(_capacity);
+      reserve(_capacity * k_grow_factor);
     }
     _data[_count++] = value;
   };
+
+  void pop_back() { _count--; }
 
   // todo //? подумайте как реализовать этот метод(place in)
   //   template <typename T1>
@@ -85,28 +104,37 @@ class Vector {
   T* erase(const size_t pos) { return erase(_data + pos); };
   T* erase(const T* pos) { return erase(pos, pos); };
   T* erase(const T* begin, const T* end) {
-    const size_t deleteItemsCount = std::distance(begin, end);
-
-    if (begin == nullptr || end == nullptr || deleteItemsCount < 0) {
-      // incorrect erase
-      return _data;
+    // incorrect erase param
+    if (begin == nullptr || end == nullptr || begin <= end) {
+      throw std::logic_error("Incorrect addressing of pointers");
     };
 
-    if (deleteItemsCount == _count) {  // erase all data
+    const size_t deleteItemsCount = std::distance(begin, end);
+
+    // erase all data
+    if (deleteItemsCount == _count) {
       _count = 0;
       return _data;
     }
 
     T* buffer = new T[_capacity]{};
 
-    if (end == _data + _count) {  // erese on front
+    // erese on back
+    if (end == _data + _count) {
       _count -= deleteItemsCount + 1;
       return _data;
     }
 
-    if (begin == _data) {  // erease on back
-      memcpy(buffer, _data + deleteItemsCount,
-             (_count - deleteItemsCount) * sizeof(T));
+    // erease on front
+    if (begin == _data) {
+      if (std::is_trivial<T>::value) {
+        memcpy(buffer, _data + deleteItemsCount,
+               (_count - deleteItemsCount) * sizeof(T));
+      } else {
+        for (size_t index{0}; index < (_count - deleteItemsCount); index++) {
+          buffer[index] = std::move(_data[index]);
+        }
+      }
       delete[] _data;
       _data = buffer;
       _count -= deleteItemsCount + 1;
@@ -115,8 +143,21 @@ class Vector {
 
     // erase in the middle
     const size_t offset = (_data - begin) / sizeof(T);
-    memcpy(buffer, _data, _count * sizeof(T));
-    memcpy(_data, buffer + offset, (_count - offset) * sizeof(T));
+
+    if (std::is_trivial<T>::value) {
+      memcpy(buffer, _data, _count * sizeof(T));
+      memcpy(_data, buffer + offset, (_count - offset) * sizeof(T));
+    } else {
+      const size_t between_begin = std::distance(_data, begin);
+      const size_t between_end = std::distance(begin, end);
+      
+      for (size_t index{0}; index < between_begin; index++) {
+        buffer[index] = std::move(_data[index]);
+      }
+      for (size_t index{between_begin}; index < _count; index++) {
+        buffer[index] = std::move(_data[index + between_end]);
+      }
+    }
 
     delete[] buffer;
 
@@ -133,10 +174,16 @@ class Vector {
   void resize(size_t count) { reserve(_count + count); };
   void reserve(size_t new_cap) {
     if (new_cap <= _capacity) {
-      return;
+      throw std::logic_error("Incorrect resizing.");
     }
     T* _new_data = new T[new_cap];
-    memcpy(_new_data, _data, sizeof(T) * _count);
+    if (std::is_trivial<T>::value) {
+      memcpy(_new_data, _data, sizeof(T) * _count);
+    } else {
+      for (size_t index{0}; index < _capacity; index++) {
+        _new_data[index] = std::move(_data[index]);
+      }
+    }
     T* old = _data;
     _data = _new_data;
     delete[] old;
@@ -147,7 +194,7 @@ class Vector {
   bool empty() const { return _count == 0; };
 
  private:
-  size_t _capacity{1};
+  size_t _capacity{k_starting_size};
   size_t _count{0};
   T* _data = new T[_capacity]{};
 };
