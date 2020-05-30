@@ -6,7 +6,7 @@ struct uDeleter {
  public:
   // typedef T* pointer;
   void operator()(T* ptr){
-    std::cout<<"this is funcor -"<<ptr<<std::endl;
+    std::cout<<"this is funcor "<<ptr<<std::endl;
     // std::cout << "()-----------------\n";
     delete ptr;
   }

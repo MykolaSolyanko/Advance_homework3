@@ -60,7 +60,7 @@ class SharedPtr {
   T* get() { return _ptr; };
   // Returns the number of different shared_ptr instances
   // managing the current object
-  long count() { return _count; };
+  long count() { return _count+1; };
 
   // like get() != nullptr
   explicit operator bool() { return (_ptr != nullptr) ? true : false; };
@@ -74,7 +74,7 @@ class SharedPtr {
   long _count{};
   void free() {
     if (_count == 0) {
-      //F(_ptr);
+      // F(_ptr);
     };
   };
 };

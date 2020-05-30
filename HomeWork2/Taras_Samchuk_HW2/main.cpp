@@ -2,9 +2,11 @@
 #include "shared_ptr.hpp"
 #include "unique_ptr.hpp"
 int main(int argc, char const *argv[]) {
+  std::cout << R"(
   //=====================================================================//
   //                        UniquePtr                                    //
-  //=====================================================================//
+  //=====================================================================//)"
+            << std::endl;
   {
       // LogMessage("UniquePtr<int> ptr1{new int{}}\n");
       // UniquePtr<int> ptr1{new int{}};  // use ~Unique_ptr() {delete ptr;}
@@ -27,14 +29,15 @@ int main(int argc, char const *argv[]) {
 
     std::cout
         << "UniquePtr<int> ptr_copy{ptr};              // compiler error\n"
-           "UniquePtr<int> ptr_copy{std::move(ptr)};   // compiler OK}\n";
+           "UniquePtr<int> ptr_copy{std::move(ptr)};   // compiler OK\n";
     // UniquePtr<int> ptr_copy{ptr};             // compiler error
     UniquePtr<int> ptr_copy{std::move(ptr)};  // compiler OK}
   }
-
+  std::cout << R"(
   //=====================================================================//
   //                        SharedPtr                                    //
-  //=====================================================================//
+  //=====================================================================//)"
+            << std::endl;
   {
     SharedPtr<int> ptr1{new int{}};  // use ~Shared_ptr() {delete ptr;}
   }
