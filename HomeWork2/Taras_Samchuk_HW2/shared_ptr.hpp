@@ -9,7 +9,7 @@ struct sDeleter {
 template <typename T>
 struct sDeleter<T[]> {
  public:
-  void operator()(T* ptr) const { delete ptr; }
+  void operator()(T* ptr) const { delete[] ptr; }
 };
 
 template <typename T, typename F = sDeleter<T>>
@@ -39,7 +39,8 @@ class SharedPtr {
       /*code*/  //+
   };
 
-  SharedPtr(SharedPtr&& ptr):_ptr(ptr._ptr),_count(ptr._count){};
+  SharedPtr(SharedPtr&& ptr) : _ptr(ptr._ptr), _count(ptr._count){};
+  ~SharedPtr() { free(); }
 
   // Replaces the managed object with an object pointed to by ptr
   void reset() {
@@ -72,10 +73,10 @@ class SharedPtr {
   pointer _ptr{nullptr};
   long _count{};
   void free() {
-    if (_count) {
-      /*code*/
+    if (_count == 0) {
+      //F(_ptr);
     };
-      /* F(_ptr); */};
+  };
 };
 
 // template <typename T, typename F>
@@ -83,6 +84,6 @@ class SharedPtr {
 // T& SharedPtr<T,F>
 
 // template <typename T, typename F>
-// T& SharedPtr<T*, F> operator[](long index) {
+// T& SharedPtr<T[], F> operator[](long index) {
 //   return &(_ptr + index);
 // };
