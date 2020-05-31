@@ -33,8 +33,6 @@ class Vector {
       throw std::logic_error("Incorrect addressing of pointers");
     };
 
-    const size_t ItemsCount = std::distance(begin, end);
-
     for (T* index{begin}; index != end; index++) {
       _data[_count++] = *index++;
     }
