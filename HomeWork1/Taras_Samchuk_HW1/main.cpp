@@ -20,7 +20,11 @@ static constexpr size_t k_TestSize2{10};
 
 // Parameters not used  -Wextra -Werror 
 int main(/*int argc, char const *argv[]*/) {
-#if true
+  std::cout<<R"(
++----------------------------------------------------+
+|             TRY VECTOR                             |
++----------------------------------------------------+
+  )"<<std::endl;
   {
       // Vector<DEBUGER> TEST;//no default constructor
   } {
@@ -57,9 +61,11 @@ int main(/*int argc, char const *argv[]*/) {
     }
     LogMessage("\n");
   }
-
-#endif
-#ifdef TEST_STACK
+  std::cout << R"(
++----------------------------------------------------+
+|             TRY STACK                              |
++----------------------------------------------------+
+  )" << std::endl;
   {
       // Stack<DEBUGER> test;  //no default constructor
   } {
@@ -81,6 +87,5 @@ int main(/*int argc, char const *argv[]*/) {
     };
     LogMessage("\n");
   };
-#endif
   return 0;
 }

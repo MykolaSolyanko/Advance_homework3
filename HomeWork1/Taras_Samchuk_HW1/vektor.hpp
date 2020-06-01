@@ -41,6 +41,9 @@ class Vector {
       : _capacity(other._capacity),
         _count(other._count),
         _data(new T[_capacity]) {
+    if (*this == other) {
+      throw std::logic_error("Logical copy error");
+    }
     for (auto&& i : _data) {
       _data[i] = other._data[i];
     }
@@ -49,6 +52,9 @@ class Vector {
   ~Vector() { delete[] _data; };
 
   Vector& operator=(const Vector& other) {
+    if (*this == other) {
+      throw std::logic_error("Logical copy error");
+    }
     delete[] _data;
     _capacity = other._capacity;
     _count = other._capacity;
@@ -75,9 +81,8 @@ class Vector {
         buffer[index + 1] = std::move(_data[index]);
       }
     }
-    T* old = _data;
+    delete[] _data;
     _data = buffer;
-    delete[] old;
     *_data = value;
     _count++;
   };
@@ -148,7 +153,7 @@ class Vector {
     } else {
       const size_t between_begin = std::distance(_data, begin);
       const size_t between_end = std::distance(begin, end);
-      
+
       for (size_t index{0}; index < between_begin; index++) {
         buffer[index] = std::move(_data[index]);
       }
