@@ -1,10 +1,10 @@
 #pragma once
 #include <iostream>
 
-void guide();
+void tester();
 
 void check_vector_constructors();
 void check_vector_memory();
 void check_vector_operators();
 void check_vector_functions();
-void stack_adapter();
+void check_stack_adapter();
