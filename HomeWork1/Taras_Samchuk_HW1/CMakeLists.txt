@@ -20,8 +20,8 @@ set (CPP_FILES
   )
 
 set (HPP_FILES
-  vektor.hpp
-  stek.hpp
+  vector.hpp
+  stack.hpp
   )
 
 

@@ -1,8 +1,8 @@
 /*
-          stek.hpp by Sam4uk
+          stack.hpp by Sam4uk
 */
 #pragma once
-#include "vektor.hpp"
+#include "vector.hpp"
 
 template <class T, class Cont = Vector<T>>
 class Stack {

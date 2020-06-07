@@ -37,7 +37,7 @@ class Vector {
       _data[_count++] = *index;
     }
   };
-  Vector(const Vector& other)
+  Vector(const Vector<T>& other)
       : _count{0}, _capacity{other._capacity}, _data{new T[_capacity]} {
     for (_count; index < other._capacity; _count++) {
       _data[_count] = other._data[_count];

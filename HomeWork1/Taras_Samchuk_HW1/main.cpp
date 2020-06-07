@@ -3,8 +3,8 @@
 */
 
 #include <iostream>
-#  include "vektor.hpp"
-#  include "stek.hpp"
+#include "stack.hpp"
+#include "vector.hpp"
 
 template <typename... Args>
 void LogMessage(Args... Values) {
@@ -18,13 +18,13 @@ constexpr size_t k_TryCount2{50};
 constexpr size_t k_TestSize1{20};
 constexpr size_t k_TestSize2{10};
 
-// Parameters not used  -Wextra -Werror 
+// Parameters not used  -Wextra -Werror
 int main(/*int argc, char const *argv[]*/) {
-  std::cout<<R"(
+  std::cout << R"(
 +----------------------------------------------------+
 |             TRY VECTOR                             |
 +----------------------------------------------------+
-  )"<<std::endl;
+  )" << std::endl;
   {
       // Vector<DEBUGER> TEST;//no default constructor
   } {
