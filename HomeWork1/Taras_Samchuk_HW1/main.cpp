@@ -13,10 +13,10 @@ void LogMessage(Args... Values) {
 
 using DEBUGER = int;
 
-static constexpr size_t k_TryCount1{33};
-static constexpr size_t k_TryCount2{50};
-static constexpr size_t k_TestSize1{20};
-static constexpr size_t k_TestSize2{10};
+constexpr size_t k_TryCount1{33};
+constexpr size_t k_TryCount2{50};
+constexpr size_t k_TestSize1{20};
+constexpr size_t k_TestSize2{10};
 
 // Parameters not used  -Wextra -Werror 
 int main(/*int argc, char const *argv[]*/) {
