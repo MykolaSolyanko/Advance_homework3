@@ -14,54 +14,50 @@ template <class T>
 class Vector {
  public:
   // constructor
-  Vector() = default;
-  Vector(size_t size) : _capacity{size} {};
+  Vector() : _count{0}, _capacity{k_starting_size}, _data{new T[_capacity]} {};
+  Vector(const size_t size)
+      : _count{0}, _capacity{size}, _data{new T[_capacity]} {};
 
-  Vector(std::initializer_list<T> list) {
-    _capacity = list.size();
-    delete[] _data;
-    _data = new T[_capacity];
-    for (auto&& i : list) {
+  Vector(const std::initializer_list<T>& list)
+      : _count{0}, _capacity{list.size()}, _data{new T[_capacity]} {
+    for (const T& value : list) {
       {
-        _data[_count++] = i;
+        _data[_count++] = value;
       }
     }
   }
-  Vector(T* begin, T* end) {
+  Vector(const T* begin, const T* end)
+      : _count{0},
+        _capacity{std::distance(begin, end)},
+        _data{new T[_capacity]} {
     if (begin == nullptr || end == nullptr || end <= begin) {
-      // return;
       throw std::logic_error("Incorrect addressing of pointers");
     };
-
-    for (T* index{begin}; index != end; index++) {
-      _data[_count++] = *index++;
+    for (T* index{begin}; index != end; ++index) {
+      _data[_count++] = *index;
     }
   };
   Vector(const Vector& other)
-      : _capacity(other._capacity),
-        _count(other._count),
-        _data(new T[_capacity]) {
-    if (*this == other) {
-      throw std::logic_error("Logical copy error");
-    }
-    for (auto&& i : _data) {
-      _data[i] = other._data[i];
+      : _count{0}, _capacity{other._capacity}, _data{new T[_capacity]} {
+    for (_count; index < other._capacity; _count++) {
+      _data[_count] = other._data[_count];
     }
     return *this;
   };
   ~Vector() { delete[] _data; };
 
   Vector& operator=(const Vector& other) {
-    if (*this == other) {
-      throw std::logic_error("Logical copy error");
+    if (this == &other) {
+      return *this;
     }
-    delete[] _data;
+    T* buffer = new T[_capacity]{};
+    for (size_t index{0}; index < other._count; index++) {
+      buffer[index] = other._data[index];
+    }
     _capacity = other._capacity;
     _count = other._capacity;
-    _data = new T[_capacity]{};
-    for (auto&& i : _data) {
-      _data[i] = other._data[i];
-    }
+    delete[] _data;
+    _data = buffer;
     return *this;
   };
 
@@ -109,7 +105,7 @@ class Vector {
   T* erase(const T* begin, const T* end) {
     // incorrect erase param
     if (begin == nullptr || end == nullptr || begin <= end) {
-      throw std::logic_error("Incorrect addressing of pointers");
+      return _data;
     };
 
     const size_t deleteItemsCount = std::distance(begin, end);
@@ -151,13 +147,12 @@ class Vector {
       memcpy(buffer, _data, _count * sizeof(T));
       memcpy(_data, buffer + offset, (_count - offset) * sizeof(T));
     } else {
-      const size_t between_begin = std::distance(_data, begin);
       const size_t between_end = std::distance(begin, end);
 
-      for (size_t index{0}; index < between_begin; index++) {
+      for (size_t index{0}; index < offset; index++) {
         buffer[index] = std::move(_data[index]);
       }
-      for (size_t index{between_begin}; index < _count; index++) {
+      for (size_t index{offset}; index < _count; index++) {
         buffer[index] = std::move(_data[index + between_end]);
       }
     }
@@ -177,19 +172,18 @@ class Vector {
   void resize(size_t count) { reserve(_count + count); };
   void reserve(size_t new_cap) {
     if (new_cap <= _capacity) {
-      throw std::logic_error("Incorrect resizing.");
+      return;
     }
     T* _new_data = new T[new_cap];
     if (std::is_trivial<T>::value) {
       memcpy(_new_data, _data, sizeof(T) * _count);
     } else {
       for (size_t index{0}; index < _capacity; index++) {
-        _new_data[index] = std::move(_data[index]);
+        _new_data[index] = _data[index];
       }
     }
-    T* old = _data;
+    delete[] _data;
     _data = _new_data;
-    delete[] old;
     _capacity = new_cap;
   };
   size_t size() const { return _count; };
@@ -197,7 +191,7 @@ class Vector {
   bool empty() const { return _count == 0; };
 
  private:
-  size_t _capacity{k_starting_size};
-  size_t _count{0};
-  T* _data = new T[_capacity]{};
+  size_t _count{};
+  size_t _capacity{};
+  T* _data{nullptr};
 };
