@@ -8,91 +8,45 @@ class Vector {
 public:
 	Vector() = default;
 	Vector(size_t new_size) : capacity{ new_size }, size{ capacity } {
-		data = (T*)std::malloc(capacity * sizeof(T));
-		if (data == nullptr) {
-			throw std::bad_alloc();
-		}
+		data = alloc_memory(capacity);
 		new(data)T[capacity]{};
 	}
-	Vector(const size_t new_size, T value) : capacity{ new_size }, size{ capacity } {
-		data = (T*)std::malloc(capacity * sizeof(T));
-		if (data == nullptr) {
-			throw std::bad_alloc();
-		}
+	Vector(const size_t new_size, const T value) : capacity{ new_size }, size{ capacity } {
+		data = alloc_memory(capacity);
 		new(data)T[capacity];
 
 		std::fill_n(data, capacity, value);
 	}
 	Vector(const std::initializer_list<T>& list) : Vector(list.size()) {
-		if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-			memcpy(data, list.begin(), list.size() * sizeof(T));
-		}
-		else {
-			T* i{ data };
-			for (auto& element : list) {
-				*i++ = element;
-			}
-		}
+		memory_copy(data, list.begin(), list.size());
 		size = list.size();
 	}
-	Vector(T* rhs_begin, T* rhs_end) {
+	Vector(const T* rhs_begin, const T* rhs_end) {
 		capacity = std::distance(rhs_begin, rhs_end);
 		size = capacity;
-		data = (T*)std::malloc(capacity * sizeof(T));
-		if (data == nullptr) {
-			throw std::bad_alloc();
-		}
+		data = alloc_memory(capacity);
 		new(data)T[capacity];
-
-		if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-			memcpy(data, rhs_begin, capacity * sizeof(T));
-		}
-		else {
-			for (T* d_begin{ data }; rhs_begin != rhs_end; d_begin++, rhs_begin++) {
-				*d_begin = *rhs_begin;
-			}
-		}
+		memory_copy(data, rhs_begin, capacity);
 	}
 	Vector(const Vector& rhs) : Vector(rhs.size) {
-
-		if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-			std::memcpy(data, rhs.data, size * sizeof(T));
-		}
-		else {
-			for (size_t i{}; i < size; i++) {
-
-				// Предупреждение	C6385	
-				//  Чтение недопустимых данных из "data":  
-				//   доступный для чтения объем равен "capacity*sizeof(T)" байт, однако считать можно только "32" байт
-				data[i] = rhs.data[i];
-			}
-		}
+		memory_copy(data, rhs.data, rhs.size);
 	}
-	 Vector (Vector&& rhs) noexcept : capacity{ rhs.capacity }, size{ rhs.size }, data{ rhs.data } {
-		 rhs.data = nullptr;
-		 rhs.size = 0;
-		 rhs.capacity = 0;
+	Vector(Vector&& rhs) noexcept : capacity{ rhs.capacity }, size{ rhs.size }, data{ rhs.data } {
+		rhs.data = nullptr;
+		rhs.size = 0;
+		rhs.capacity = 0;
 	}
-	 ~Vector() {
-		 delete_data();
-	 }
+	~Vector() {
+		delete_data();
+	}
 
-	Vector& operator=(const Vector& rhs){
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
+	Vector& operator=(const Vector& rhs) {
+		if (this == &rhs) {
+			return *this;
 		}
-		new(tmp_arr)T[capacity];
-
-		if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-			std::memcpy(tmp_arr, rhs.data, rhs.size*sizeof(T));
-		}
-		else {
-			for (size_t i{}; i != rhs.size; i++) {
-				tmp_arr[i] = rhs.data[i];
-			}
-		}
-
+		T* tmp_arr = alloc_memory(rhs.capacity);
+		new(tmp_arr)T[rhs.capacity];
+		memory_copy(tmp_arr, rhs.data, rhs.size);
 		delete_data();
 		capacity = rhs.capacity;
 		size = rhs.size;
@@ -100,7 +54,10 @@ public:
 		return *this;
 	}
 
-	Vector& operator=(Vector&& rhs) noexcept{
+	Vector& operator=(Vector&& rhs) noexcept {
+		if (this == &rhs) {
+			return *this;
+		}
 		capacity = rhs.capacity;
 		size = rhs.size;
 		data = rhs.data;
@@ -111,13 +68,6 @@ public:
 	}
 
 	const T& operator[](const size_t pos) const {
-
-		// only for review
-		if (pos > size) {
-			throw std::out_of_range ("operator[] out of range");
-		}
-		// only for review
-
 		return data[pos];
 	}
 	T& operator[](const size_t pos) {
@@ -130,7 +80,7 @@ public:
 	size_t size_() const noexcept {
 		return this->size;
 	}
-	bool empty() const noexcept{
+	bool empty() const noexcept {
 		if (size == 0) {
 			return true;
 		}
@@ -144,51 +94,28 @@ public:
 		return { data + size };
 	}
 
-	void push_front(T value) {
+	void push_front(const T value) {
 		if (size == capacity) {
 			capacity *= 2;
 		}
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
-		new(tmp_arr)T[capacity]{};
-
+		T* tmp_arr = alloc_memory(capacity);
+		new(tmp_arr)T[capacity];
 		tmp_arr[0] = value;
-		if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-			std::memcpy((tmp_arr + 1), data, size * sizeof(T));
-		}
-		else {
-			for (size_t i{}; i != size; i++) {
-				tmp_arr[i + 1] = std::move(data[i]);
-			}
-		}
-
+		memory_copy((tmp_arr + 1), data, size);
 		delete_data();
 		data = tmp_arr;
 		size++;
 	}
 
-	void push_back(T value) {
+	void push_back(const T value) {
 		if (size == capacity) {
 			capacity *= 2;
 		}
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
-		new(tmp_arr)T[capacity]{};
+		T* tmp_arr = alloc_memory(capacity);
+		new(tmp_arr)T[capacity];
 
-		if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-			std::memcpy(tmp_arr, data, size * sizeof(T));
-		}
-		else {
-			for (size_t i{}; i != size;i++) {
-				tmp_arr[i] = data[i];
-			}
-		}
+		memory_copy(tmp_arr, data, size);
 		tmp_arr[size] = value;
-
 		delete_data();
 		data = tmp_arr;
 		size++;
@@ -196,135 +123,70 @@ public:
 
 	template <typename ... Rest>
 	void emplace_back(Rest&&... rest) {
-		push_back(T{rest...});
+		push_back(T{ rest... });
 	}
 
-	void insert(size_t pos, T value) {
-		// cause of pos{0} which == data[0] causes error in erase function
+	void insert(size_t pos, const T value) {
+		// cause of pos{0} which == data[0] causes error: cant identify which function need to be called
+		// then pos{1} = data[0], pos{2} = data[1]  
 		pos--;
 
 		if (size == capacity) {
 			capacity *= 2;
 		}
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
-		new(tmp_arr)T[capacity]{};
-
-		size_t i{};
-		for (; i != pos; i++) {
-			tmp_arr[i] = data[i];
-		}
+		T* tmp_arr = alloc_memory(capacity);
+		new(tmp_arr)T[capacity];
+		memory_copy(tmp_arr, data, pos);
 		tmp_arr[pos] = value;
-		for (; i != size; i++) {
-			tmp_arr[i+1] = data[i];
-		}
-
+		memory_copy((tmp_arr + pos + 1), (data + pos), (size - pos));
 		delete_data();
 		data = tmp_arr;
 		size++;
 	}
 
 	void erase(size_t pos) {
-
-		// cause of pos{0} which == data[0] causes error: cant identify which function need to be called
-		// then pos{1} = data[0], pos{2} = data[1]  
-		pos --;
-
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
-		new(tmp_arr)T[capacity]{};
-
-		if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-			memcpy(tmp_arr, data, pos*sizeof(T));
-			memcpy((tmp_arr + pos), (data + pos + 1), (size - pos)*sizeof(T));
-		}
-		else {
-			size_t i{};
-			for (; i != pos;i++) {
-				tmp_arr[i] = std::move(data[i]);
-			}
-			for (; i != size;i++) {
-				tmp_arr[i] = std::move(data[i + 1]);
-			}
-		}
+		pos--;
+		T* tmp_arr = alloc_memory(capacity);
+		new(tmp_arr)T[capacity];
+		memory_copy(tmp_arr, data, pos);
+		memory_copy((tmp_arr + pos), (data + pos + 1), (size - pos));
 		delete_data();
 		data = tmp_arr;
 		size--;
 	}
 
 	void erase(T* pos) {
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
-		new(tmp_arr)T[capacity]{};
-
-		T* tmp_ptr { tmp_arr };
-		T* d_begin{data};
-		for (; d_begin != pos; d_begin++, tmp_ptr++) {
-			*tmp_ptr = std::move(*d_begin);
-		}
-		if (d_begin != end()) {
-			d_begin++;
-			for (T* d_end{ data + size }; d_begin != d_end; d_begin++, tmp_ptr++) {
-				*tmp_ptr = std::move(*d_begin);
-			}
-		}
-
+		T* tmp_arr = alloc_memory(capacity);
+		new(tmp_arr)T[capacity];
+		size_t distance_to_pos = std::distance(data, pos);
+		memory_copy(tmp_arr, data, distance_to_pos);
+		memory_copy((tmp_arr + distance_to_pos), (data + distance_to_pos + 1), (size - distance_to_pos));
 		delete_data();
 		data = tmp_arr;
 		size--;
 	}
 
 	void erase(T* begin, T* end) {
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
-		new(tmp_arr)T[capacity]{};
-
-		T* tmp_begin{ tmp_arr };
-		T* d_begin{ data };
+		T* tmp_arr = alloc_memory(capacity);
+		new(tmp_arr)T[capacity];
 		size_t erase_distance = std::distance(begin, end);
-
-		for (; d_begin != begin;d_begin++, tmp_begin++) {
-			*tmp_begin = std::move(*d_begin);
-		}
-		d_begin += erase_distance;
-		for (T* d_end{ data + size };d_begin != d_end; d_begin++, tmp_begin++) {
-			*tmp_begin = std::move(*d_begin);
-		}
-
+		size_t pos_start_erase = std::distance(data, begin);
+		memory_copy(tmp_arr, data, pos_start_erase);
+		memory_copy(tmp_arr + pos_start_erase, end, (size - erase_distance));
 		delete_data();
 		data = tmp_arr;
 		size -= erase_distance;
 	}
 
 	void reserve(const size_t new_cap) {
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
-		new(tmp_arr)T[capacity]{};
+		T* tmp_arr = alloc_memory(new_cap);
+		new(tmp_arr)T[capacity];
 
 		if (size != 0) {
-			if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-				std::memcpy(tmp_arr, data, sizeof(T) * size);
-			}
-			else {
-				for (size_t i{}; i != size;i++) {
-					tmp_arr[i] = std::move(data[i]);
-				}
-			}
+			memory_copy(tmp_arr, data, size);
 		}
-		
 		delete_data();
 		data = tmp_arr;
-
 	}
 
 	void resize(const size_t new_size) {
@@ -336,31 +198,13 @@ public:
 			}
 			size = new_size;
 		}
+
 		capacity = new_size;
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
+		T* tmp_arr = alloc_memory(capacity);
 		new(tmp_arr)T[capacity]{};
-
 		if (size != 0) {
-			if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-				std::memcpy(tmp_arr, data, sizeof(T) * size);
-			}
-			else {
-				for (size_t i{}; i != size;i++) {
-					tmp_arr[i] = data[i];
-				}
-			}
+			memory_copy(tmp_arr, data, size);
 		}
-
-		if (new_size > size) {
-			T tmp_value{};
-			for (size_t i{ size }; i != new_size; i++) {
-				tmp_arr[i] = tmp_value;
-			}
-		}
-
 		delete_data();
 		data = tmp_arr;
 		size = new_size;
@@ -376,23 +220,12 @@ public:
 			size = new_size;
 		}
 		capacity = new_size;
-		T* tmp_arr = (T*)std::malloc(capacity * sizeof(T));
-		if (tmp_arr == nullptr) {
-			throw std::bad_alloc();
-		}
-		new(tmp_arr)T[capacity]{};
+		T* tmp_arr = alloc_memory(capacity);
+		new(tmp_arr)T[capacity];
 
 		if (size != 0) {
-			if (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-				std::memcpy(tmp_arr, data, sizeof(T) * size);
-			}
-			else {
-				for (size_t i{}; i != size;i++) {
-					tmp_arr[i] = data[i];
-				}
-			}
+			memory_copy(tmp_arr, data, size);
 		}
-
 		if (new_size > size) {
 			for (size_t i{ size }; i != new_size; i++) {
 				tmp_arr[i] = value;
@@ -406,7 +239,7 @@ public:
 
 	void clear() {
 		size = 0;
-		data = nullptr;
+		delete_data();
 	}
 
 	T front() {
@@ -419,7 +252,7 @@ public:
 
 	void test_analize() noexcept {
 		std::cout << "CHECK: Empty? " << empty() << std::endl;
-		std::cout << "Capacity: " << capacity <<std::endl;
+		std::cout << "Capacity: " << capacity << std::endl;
 		std::cout << "Size: " << size << std::endl;
 		if (size != 0) {
 			std::cout << "Print vector: \n";
@@ -443,12 +276,38 @@ private:
 	size_t size{};
 
 	void delete_data() {
-		if (std::is_constructible<T>::value) {
-			for (size_t i{}; i != size; i++) {
-				data[i].~T();
+		if (size != 0) {
+			if constexpr (std::is_constructible<T>::value) {
+				for (size_t i{}; i != size; i++) {
+					data[i].~T();
+				}
+			}
+			std::free(data);
+		}
+	}
+
+	void memory_copy(T* destination, const T* source, const size_t copy_size) {
+		if constexpr (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
+			std::memcpy(destination, source, copy_size * sizeof(T));
+		}
+		else if constexpr (std::is_nothrow_move_constructible<T>::value) {
+			for (size_t i{}; i != copy_size;i++) {
+				destination[i] = std::move(source[i]);
 			}
 		}
-		std::free(data);
+		else {
+			for (size_t i{}; i != copy_size;i++) {
+				destination[i] = source[i];
+			}
+		}
+	}
+
+	T* alloc_memory(size_t needed_memory) {
+		T* tmp_arr = (T*)std::malloc(needed_memory * sizeof(T));
+		if (tmp_arr == nullptr) {
+			throw std::bad_alloc();
+		}
+		return tmp_arr;
 	}
 
 	void print_pair() {
