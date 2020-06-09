@@ -28,10 +28,10 @@ public:
 		new(data)T[capacity];
 		memory_copy(data, rhs_begin, capacity);
 	}
-	Vector(const Vector& rhs) : Vector(rhs.size) {
+	Vector(const Vector<T>& rhs) : Vector(rhs.size) {
 		memory_copy(data, rhs.data, rhs.size);
 	}
-	Vector(Vector&& rhs) noexcept : capacity{ rhs.capacity }, size{ rhs.size }, data{ rhs.data } {
+	Vector(Vector<T>&& rhs) noexcept : capacity{ rhs.capacity }, size{ rhs.size }, data{ rhs.data } {
 		rhs.data = nullptr;
 		rhs.size = 0;
 		rhs.capacity = 0;
@@ -40,7 +40,7 @@ public:
 		delete_data();
 	}
 
-	Vector& operator=(const Vector& rhs) {
+	Vector& operator=(const Vector<T>& rhs) {
 		if (this == &rhs) {
 			return *this;
 		}
@@ -54,7 +54,7 @@ public:
 		return *this;
 	}
 
-	Vector& operator=(Vector&& rhs) noexcept {
+	Vector& operator=(Vector<T>&& rhs) noexcept {
 		if (this == &rhs) {
 			return *this;
 		}
@@ -81,10 +81,7 @@ public:
 		return this->size;
 	}
 	bool empty() const noexcept {
-		if (size == 0) {
-			return true;
-		}
-		return false;
+		return size == 0;
 	}
 
 	T* begin() {
