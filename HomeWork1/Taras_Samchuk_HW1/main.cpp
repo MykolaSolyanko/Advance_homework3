@@ -25,14 +25,12 @@ int main(/*int argc, char const *argv[]*/) {
 |             TRY VECTOR                             |
 +----------------------------------------------------+
   )" << std::endl;
-  {
-      // Vector<TypeForTest> TEST;//no default constructor
-  } {
-    Vector<TypeForTest> TEST{k_TestSize1};
-  }
+  { Vector<TypeForTest> TEST; }
+  { Vector<TypeForTest> TEST{k_TestSize1}; }
   {
     LogMessage("\t\t\tTest methods\n");
-    Vector<TypeForTest> TEST{k_TestSize2};
+    LogMessage("==========================================\n");
+    Vector<TypeForTest> TEST;  //{k_TestSize2};
     TEST.push_back(3);
     LogMessage("TEST.push_back(3)\n");
     LogMessage("begin():", TEST.begin(), "\n");
@@ -60,15 +58,20 @@ int main(/*int argc, char const *argv[]*/) {
       LogMessage("ellem[", i, "]=", TEST[i], " ");
     }
     LogMessage("\n");
+    Vector<TypeForTest> TEST2;
+    TEST2 = TEST;
+    LogMessage("begin():", TEST2.begin(), "\n");
+    LogMessage("end():", TEST2.end(), "\n");
+    LogMessage("count():", TEST2.size(), "\n");
+    LogMessage("capacity():", TEST2.capacity(), "\n");
   }
   std::cout << R"(
 +----------------------------------------------------+
 |             TRY STACK                              |
 +----------------------------------------------------+
   )" << std::endl;
+  { Stack<TypeForTest> test; }
   {
-      // Stack<TypeForTest> test;  //no default constructor
-  } {
     LogMessage("\t\t\tTest with param\n");
     Stack<TypeForTest, Vector<TypeForTest>> test(k_TestSize1);
   }
