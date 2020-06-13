@@ -2,7 +2,8 @@
           vector.hpp by Sam4uk
 */
 #pragma once
-#include <cstring>    //+ size_t & memcpy
+#include <cstring>  //+ size_t & memcpy
+#include <iostream>
 #include <iterator>   //+ std::distance
 #include <stdexcept>  //+ std::logic_error
 #include <utility>    //+ std::initializer_list
@@ -14,51 +15,50 @@ template <class T>
 class Vector {
  public:
   // constructor
-  Vector() : _count{0}, _capacity{k_starting_size}, _data{new T[_capacity]} {}
+  Vector() : _count{0}, _capacity{0}, _data{nullptr} {}
 
   Vector(const size_t size)
-      : _count{0}, _capacity{size}, _data{new T[_capacity]} {}
+      : _count{size}, _capacity{size}, _data{new T[size]} {}
 
-  Vector(const std::initializer_list<T>& list)
-      : _count{0}, _capacity{list.size()}, _data{new T[_capacity]} {
+  Vector(const std::initializer_list<T>& list) : Vector(list.size()) {
     for (const T& value : list) {
       {
-        _data[_count++] = value;
+        *(++_data) = value;
       }
     }
   }
 
-  Vector(const T* begin, const T* end)
-      : _count{0},
-        _capacity{std::distance(begin, end)},
-        _data{new T[_capacity]} {
+  Vector(const T* begin, const T* end) : Vector(std::distance(begin, end)) {
     if (begin == nullptr || end == nullptr || end <= begin) {
       throw std::logic_error("Incorrect addressing of pointers");
     };
     if constexpr (std::is_trivial<T>::value) {
       size_t count = std::distance(begin, end);
       memcpy(_data, begin, count * sizeof(T));
-      _count = count;
     } else
       for (T* index{begin}; index != end; ++index) {
-        _data[_count++] = *index;
+        *(++_data) = *index;
       }
   }
 
-  Vector(const Vector<T>& other)
-      : _count{0}, _capacity{other._capacity}, _data{new T[_capacity]} {
-    for (_count; _count < other._capacity; _count++) {
-      _data[_count] = other._data[_count];
+  Vector(const Vector<T>& other) : Vector(other._count) {
+    for (size_t index{0}; index < other._capacity; _count++) {
+      //
+      _data[index] = other._data[index];
     }
   }
 
-  ~Vector() noexcept { delete[] _data; }
+  ~Vector() noexcept {
+    if (_data != nullptr) {
+      delete[] _data;
+    }
+  }
 
   Vector& operator=(const Vector& other) {
     if (this == &other) {
       return *this;
     }
-    T* buffer = new T[_capacity]{};
+    T* buffer = new T[other._capacity]{};
     for (size_t index{0}; index < other._count; index++) {
       buffer[index] = other._data[index];
     }
@@ -74,8 +74,8 @@ class Vector {
   const T* end() { return (_data + _count); }
 
   void push_front(T value) {
-    if (_count >= _capacity - 1) {
-      reserve(_capacity * k_grow_factor);
+    if ((_count + 1) >= _capacity) {
+      reserve((_capacity == 0) ? k_starting_size : _capacity * k_grow_factor);
     }
     T* buffer = new T[_capacity];
     if constexpr (std::is_trivial<T>::value) {
@@ -95,7 +95,7 @@ class Vector {
 
   void push_back(T value) {
     if (_count == _capacity) {
-      reserve(_capacity * k_grow_factor);
+      reserve((_capacity == 0) ? k_starting_size : _capacity * k_grow_factor);
     }
     _data[_count++] = value;
   }
@@ -129,13 +129,13 @@ class Vector {
       return _data;
     }
 
-    T* buffer = new T[_capacity]{};
-
     // erese on back
     if (end == _data + _count) {
       _count -= deleteItemsCount + 1;
       return _data;
     }
+
+    T* buffer = new T[_capacity]{};
 
     // erease on front
     if (begin == _data) {
@@ -192,7 +192,7 @@ class Vector {
   void resize(size_t count) { reserve(_count + count); }
 
   void reserve(size_t new_cap) {
-    if (new_cap <= _capacity) {
+    if (new_cap <= _count) {
       return;
     }
     T* _new_data = new T[new_cap];
@@ -203,7 +203,9 @@ class Vector {
         _new_data[index] = _data[index];
       }
     }
-    delete[] _data;
+    if (_data != nullptr) {
+      delete[] _data;
+    }
     _data = _new_data;
     _capacity = new_cap;
   }
@@ -214,6 +216,9 @@ class Vector {
   bool empty() const { return _count == 0; }
 
  private:
+  // void NoName() {
+
+  // }
   size_t _count{};
   size_t _capacity{};
   T* _data{nullptr};
