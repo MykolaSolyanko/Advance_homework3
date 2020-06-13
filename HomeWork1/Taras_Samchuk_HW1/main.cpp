@@ -7,11 +7,11 @@
 #include "vector.hpp"
 
 template <typename... Args>
-void LogMessage(Args... Values) {
+void LogMessage(Args&&... Values) {
   (std::cout << ... << Values);
 }
 
-using DEBUGER = int;
+using TypeForTest = int;
 
 constexpr size_t k_TryCount1{33};
 constexpr size_t k_TryCount2{50};
@@ -26,13 +26,13 @@ int main(/*int argc, char const *argv[]*/) {
 +----------------------------------------------------+
   )" << std::endl;
   {
-      // Vector<DEBUGER> TEST;//no default constructor
+      // Vector<TypeForTest> TEST;//no default constructor
   } {
-    Vector<DEBUGER> TEST{k_TestSize1};
+    Vector<TypeForTest> TEST{k_TestSize1};
   }
   {
     LogMessage("\t\t\tTest methods\n");
-    Vector<DEBUGER> TEST{k_TestSize2};
+    Vector<TypeForTest> TEST{k_TestSize2};
     TEST.push_back(3);
     LogMessage("TEST.push_back(3)\n");
     LogMessage("begin():", TEST.begin(), "\n");
@@ -67,15 +67,15 @@ int main(/*int argc, char const *argv[]*/) {
 +----------------------------------------------------+
   )" << std::endl;
   {
-      // Stack<DEBUGER> test;  //no default constructor
+      // Stack<TypeForTest> test;  //no default constructor
   } {
     LogMessage("\t\t\tTest with param\n");
-    Stack<DEBUGER, Vector<DEBUGER>> test(k_TestSize1);
+    Stack<TypeForTest, Vector<TypeForTest>> test(k_TestSize1);
   }
 
   {
     LogMessage("\t\t\tTest methods\n");
-    Stack<DEBUGER> test(k_TestSize2);
+    Stack<TypeForTest> test(k_TestSize2);
     LogMessage("Empty:", test.isEmpty(), " Count:", test.getCount(),
                " Size:", test.getMaxSize(), "\n");
     for (size_t i{0}; i < k_TryCount1; i++) {
