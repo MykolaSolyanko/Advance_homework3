@@ -1,6 +1,6 @@
 #include "Vector.hpp"
 #include "Stack.hpp"
-#include "Test_Functions.h"
+#include "test_functions.h"
 
 void check_vector_constructors() {
     std::cout << "Vector constructors\n";
