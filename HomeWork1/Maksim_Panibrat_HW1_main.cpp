@@ -1,4 +1,5 @@
 #include "test_functions.h"
+#include <exception>
 
 int main(int argc, char const* argv[])
 {
@@ -7,7 +8,7 @@ int main(int argc, char const* argv[])
 
     for (char select{ 'y' }; select == 'y'; std::cin >> select) {
         try {
-            guide();
+            test_functions_caller();
         }
         catch (const std::bad_alloc & e) {
             std::cout << "Bad Alloc Error\n" << e.what() << std::endl;

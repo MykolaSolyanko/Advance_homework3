@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 
-void tester();
+void test_functions_caller();
 
 void check_vector_constructors();
 void check_vector_memory();

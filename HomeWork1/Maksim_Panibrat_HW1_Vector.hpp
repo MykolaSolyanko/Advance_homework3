@@ -1,13 +1,16 @@
 #pragma once
-
-// iostream used only in analize and prints, can be deleted when program will be complited
-#include <iostream>
+#include <exception>
+#include <cstring>
+#include <iterator>
+#include <initializer_list>
+#include <algorithm>
+#include <type_traits>
 
 template <typename T>
 class Vector {
 public:
 	Vector() = default;
-	Vector(size_t new_size) : capacity_{ new_size }, size_{ capacity_ } {
+	Vector(const size_t new_size) : capacity_{ new_size }, size_{ capacity_ } {
 		data_ = alloc_memory(capacity_);
 		new(data_)T[capacity_]{};
 	}
@@ -247,27 +250,6 @@ public:
 		return { *(data_ + size_ - 1) };
 	}
 
-
-	void test_analize() noexcept {
-		std::cout << "CHECK: Empty? " << empty() << std::endl;
-		std::cout << "Capacity: " << capacity_ << std::endl;
-		std::cout << "Size: " << size_ << std::endl;
-		if (size_ != 0) {
-			std::cout << "Print vector: \n";
-			if constexpr (std::is_same<std::pair<bool, const char*>, T>::value) {
-				print_pair();
-				return;
-			}
-			else if constexpr (std::is_arithmetic<T>::value) {
-				print_arithmetic();
-				return;
-			}
-			else {
-				std::cout << "Cant print\n";
-			}
-		}
-	}
-
 private:
 	size_t capacity_{ 4 };
 	T* data_{};
@@ -306,16 +288,5 @@ private:
 			throw std::bad_alloc();
 		}
 		return tmp_arr;
-	}
-
-	void print_pair() {
-		for (int i{}; i != size_;i++) {
-			std::cout << data_[i].first << data_[i].second << std::endl;
-		}
-	}
-	void print_arithmetic() {
-		for (int i{}; i != size_;i++) {
-			std::cout << data_[i] << std::endl;
-		}
 	}
 };

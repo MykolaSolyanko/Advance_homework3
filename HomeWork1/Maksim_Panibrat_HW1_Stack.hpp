@@ -1,19 +1,19 @@
 #pragma once
-
-using pair = std::pair<bool, const char*>;
+#include <utility>
 
 template <typename T, class Container>
-class Stack_ad {
+class Stack_adapter {
 public:
+	using stack_pair = std::pair<bool, const char*>;
 
-	pair push(T value) {
+	stack_pair push(T value) {
 		if (vec.size() > vec.capacity()) {
 			return { false, "Stack full" };
 		}
 		vec.push_back(value);
 		return { true, "Push success" };
 	}
-	pair pop() {
+	stack_pair pop() {
 		if (vec.size() == 0) {
 			return { false, "Stack clear" };
 		}
@@ -51,8 +51,8 @@ public:
 	const unsigned long long GetCapacity() {
 		return vec.capacity();
 	}
-	void analize() {
-		vec.test_analize();
+	bool empty() {
+		return vec.size() == 0;
 	}
 
 private:
