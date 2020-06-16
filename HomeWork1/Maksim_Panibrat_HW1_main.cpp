@@ -1,4 +1,4 @@
-#include "Test_Functions_List.h"
+#include "Test_Functions.h"
 
 int main(int argc, char const* argv[])
 {

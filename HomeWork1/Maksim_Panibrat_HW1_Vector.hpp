@@ -7,34 +7,34 @@ template <typename T>
 class Vector {
 public:
 	Vector() = default;
-	Vector(size_t new_size) : capacity{ new_size }, size{ capacity } {
-		data = alloc_memory(capacity);
-		new(data)T[capacity]{};
+	Vector(size_t new_size) : capacity_{ new_size }, size_{ capacity_ } {
+		data_ = alloc_memory(capacity_);
+		new(data_)T[capacity_]{};
 	}
-	Vector(const size_t new_size, const T value) : capacity{ new_size }, size{ capacity } {
-		data = alloc_memory(capacity);
-		new(data)T[capacity];
+	Vector(const size_t new_size, const T value) : capacity_{ new_size }, size_{ capacity_ } {
+		data_ = alloc_memory(capacity_);
+		new(data_)T[capacity_];
 
-		std::fill_n(data, capacity, value);
+		std::fill_n(data_, capacity_, value);
 	}
 	Vector(const std::initializer_list<T>& list) : Vector(list.size()) {
-		memory_copy(data, list.begin(), list.size());
-		size = list.size();
+		memory_copy(data_, list.begin(), list.size());
+		size_ = list.size();
 	}
 	Vector(const T* rhs_begin, const T* rhs_end) {
-		capacity = std::distance(rhs_begin, rhs_end);
-		size = capacity;
-		data = alloc_memory(capacity);
-		new(data)T[capacity];
-		memory_copy(data, rhs_begin, capacity);
+		capacity_ = std::distance(rhs_begin, rhs_end);
+		size_ = capacity_;
+		data_ = alloc_memory(capacity_);
+		new(data_)T[capacity_];
+		memory_copy(data_, rhs_begin, capacity_);
 	}
-	Vector(const Vector<T>& rhs) : Vector(rhs.size) {
-		memory_copy(data, rhs.data, rhs.size);
+	Vector(const Vector<T>& rhs) : Vector<T>(rhs.size_) {
+		memory_copy(data_, rhs.data_, rhs.size_);
 	}
-	Vector(Vector<T>&& rhs) noexcept : capacity{ rhs.capacity }, size{ rhs.size }, data{ rhs.data } {
-		rhs.data = nullptr;
-		rhs.size = 0;
-		rhs.capacity = 0;
+	Vector(Vector<T>&& rhs) noexcept : capacity_{ rhs.capacity_ }, size_{ rhs.size_ }, data_{ rhs.data_ } {
+		rhs.data_ = nullptr;
+		rhs.size_ = 0;
+		rhs.capacity_ = 0;
 	}
 	~Vector() {
 		delete_data();
@@ -44,13 +44,13 @@ public:
 		if (this == &rhs) {
 			return *this;
 		}
-		T* tmp_arr = alloc_memory(rhs.capacity);
-		new(tmp_arr)T[rhs.capacity];
-		memory_copy(tmp_arr, rhs.data, rhs.size);
+		T* tmp_arr = alloc_memory(rhs.capacity_);
+		new(tmp_arr)T[rhs.capacity_];
+		memory_copy(tmp_arr, rhs.data_, rhs.size_);
 		delete_data();
-		capacity = rhs.capacity;
-		size = rhs.size;
-		data = tmp_arr;
+		capacity_ = rhs.capacity_;
+		size_ = rhs.size_;
+		data_ = tmp_arr;
 		return *this;
 	}
 
@@ -58,64 +58,64 @@ public:
 		if (this == &rhs) {
 			return *this;
 		}
-		capacity = rhs.capacity;
-		size = rhs.size;
-		data = rhs.data;
-		rhs.data = nullptr;
-		rhs.size = 0;
-		rhs.capacity = 0;
+		capacity_ = rhs.capacity_;
+		size_ = rhs.size_;
+		data_ = rhs.data_;
+		rhs.data_ = nullptr;
+		rhs.size_ = 0;
+		rhs.capacity_ = 0;
 		return *this;
 	}
 
 	const T& operator[](const size_t pos) const {
-		return data[pos];
+		return data_[pos];
 	}
 	T& operator[](const size_t pos) {
-		return data[pos];
+		return data_[pos];
 	}
 
-	size_t capacity_() const noexcept {
-		return this->capacity;
+	size_t capacity() const noexcept {
+		return this->capacity_;
 	}
-	size_t size_() const noexcept {
-		return this->size;
+	size_t size() const noexcept {
+		return this->size_;
 	}
 	bool empty() const noexcept {
-		return size == 0;
+		return size_ == 0;
 	}
 
 	T* begin() {
-		return { data };
+		return { data_ };
 	}
 	T* end() {
-		return { data + size };
+		return { data_ + size_ };
 	}
 
 	void push_front(const T value) {
-		if (size == capacity) {
-			capacity *= 2;
+		if (size_ == capacity_) {
+			capacity_ *= 2;
 		}
-		T* tmp_arr = alloc_memory(capacity);
-		new(tmp_arr)T[capacity];
+		T* tmp_arr = alloc_memory(capacity_);
+		new(tmp_arr)T[capacity_];
 		tmp_arr[0] = value;
-		memory_copy((tmp_arr + 1), data, size);
+		memory_copy((tmp_arr + 1), data_, size_);
 		delete_data();
-		data = tmp_arr;
-		size++;
+		data_ = tmp_arr;
+		size_++;
 	}
 
 	void push_back(const T value) {
-		if (size == capacity) {
-			capacity *= 2;
+		if (size_ == capacity_) {
+			capacity_ *= 2;
 		}
-		T* tmp_arr = alloc_memory(capacity);
-		new(tmp_arr)T[capacity];
+		T* tmp_arr = alloc_memory(capacity_);
+		new(tmp_arr)T[capacity_];
 
-		memory_copy(tmp_arr, data, size);
-		tmp_arr[size] = value;
+		memory_copy(tmp_arr, data_, size_);
+		tmp_arr[size_] = value;
 		delete_data();
-		data = tmp_arr;
-		size++;
+		data_ = tmp_arr;
+		size_++;
 	}
 
 	template <typename ... Rest>
@@ -128,130 +128,131 @@ public:
 		// then pos{1} = data[0], pos{2} = data[1]  
 		pos--;
 
-		if (size == capacity) {
-			capacity *= 2;
+		if (size_ == capacity_) {
+			capacity_ *= 2;
 		}
-		T* tmp_arr = alloc_memory(capacity);
-		new(tmp_arr)T[capacity];
-		memory_copy(tmp_arr, data, pos);
+		T* tmp_arr = alloc_memory(capacity_);
+		new(tmp_arr)T[capacity_];
+		memory_copy(tmp_arr, data_, pos);
 		tmp_arr[pos] = value;
-		memory_copy((tmp_arr + pos + 1), (data + pos), (size - pos));
+		memory_copy((tmp_arr + pos + 1), (data_ + pos), (size_ - pos));
 		delete_data();
-		data = tmp_arr;
-		size++;
+		data_ = tmp_arr;
+		size_++;
 	}
 
 	void erase(size_t pos) {
 		pos--;
-		T* tmp_arr = alloc_memory(capacity);
-		new(tmp_arr)T[capacity];
-		memory_copy(tmp_arr, data, pos);
-		memory_copy((tmp_arr + pos), (data + pos + 1), (size - pos));
+		T* tmp_arr = alloc_memory(capacity_);
+		new(tmp_arr)T[capacity_];
+		memory_copy(tmp_arr, data_, pos);
+		memory_copy((tmp_arr + pos), (data_ + pos + 1), (size_ - pos));
 		delete_data();
-		data = tmp_arr;
-		size--;
+		data_ = tmp_arr;
+		size_--;
 	}
 
 	void erase(T* pos) {
-		T* tmp_arr = alloc_memory(capacity);
-		new(tmp_arr)T[capacity];
-		size_t distance_to_pos = std::distance(data, pos);
-		memory_copy(tmp_arr, data, distance_to_pos);
-		memory_copy((tmp_arr + distance_to_pos), (data + distance_to_pos + 1), (size - distance_to_pos));
+		T* tmp_arr = alloc_memory(capacity_);
+		new(tmp_arr)T[capacity_];
+		size_t distance_to_pos = std::distance(data_, pos);
+		memory_copy(tmp_arr, data_, distance_to_pos);
+		memory_copy((tmp_arr + distance_to_pos), (data_ + distance_to_pos + 1), (size_ - distance_to_pos));
 		delete_data();
-		data = tmp_arr;
-		size--;
+		data_ = tmp_arr;
+		size_--;
 	}
 
 	void erase(T* begin, T* end) {
-		T* tmp_arr = alloc_memory(capacity);
-		new(tmp_arr)T[capacity];
+		T* tmp_arr = alloc_memory(capacity_);
+		new(tmp_arr)T[capacity_];
 		size_t erase_distance = std::distance(begin, end);
-		size_t pos_start_erase = std::distance(data, begin);
-		memory_copy(tmp_arr, data, pos_start_erase);
-		memory_copy(tmp_arr + pos_start_erase, end, (size - erase_distance));
+		size_t pos_start_erase = std::distance(data_, begin);
+		memory_copy(tmp_arr, data_, pos_start_erase);
+		memory_copy(tmp_arr + pos_start_erase, end, (size_ - erase_distance));
 		delete_data();
-		data = tmp_arr;
-		size -= erase_distance;
+		data_ = tmp_arr;
+		size_ -= erase_distance;
 	}
 
 	void reserve(const size_t new_cap) {
 		T* tmp_arr = alloc_memory(new_cap);
-		new(tmp_arr)T[capacity];
+		new(tmp_arr)T[capacity_];
 
-		if (size != 0) {
-			memory_copy(tmp_arr, data, size);
+		if (size_ != 0) {
+			memory_copy(tmp_arr, data_, size_);
 		}
 		delete_data();
-		data = tmp_arr;
+		data_ = tmp_arr;
+		capacity_ = new_cap;
 	}
 
 	void resize(const size_t new_size) {
-		if (new_size < size) {
+		if (new_size < size_) {
 			if (std::is_constructible<T>::value) {
-				for (size_t i{ new_size }; i != size; i++) {
-					data[i].~T();
+				for (size_t i{ new_size }; i != size_; i++) {
+					data_[i].~T();
 				}
 			}
-			size = new_size;
+			size_ = new_size;
 		}
 
-		capacity = new_size;
-		T* tmp_arr = alloc_memory(capacity);
-		new(tmp_arr)T[capacity]{};
-		if (size != 0) {
-			memory_copy(tmp_arr, data, size);
+		capacity_ = new_size;
+		T* tmp_arr = alloc_memory(capacity_);
+		new(tmp_arr)T[capacity_]{};
+		if (size_ != 0) {
+			memory_copy(tmp_arr, data_, size_);
 		}
 		delete_data();
-		data = tmp_arr;
-		size = new_size;
+		data_ = tmp_arr;
+		size_ = new_size;
 	}
 
 	void resize(const size_t new_size, const T value) {
-		if (new_size < size) {
+		if (new_size < size_) {
 			if (std::is_constructible<T>::value) {
-				for (size_t i{ new_size }; i != size; i++) {
-					data[i].~T();
+				for (size_t i{ new_size }; i != size_; i++) {
+					data_[i].~T();
 				}
 			}
-			size = new_size;
+			size_ = new_size;
 		}
-		capacity = new_size;
-		T* tmp_arr = alloc_memory(capacity);
-		new(tmp_arr)T[capacity];
+		capacity_ = new_size;
+		T* tmp_arr = alloc_memory(capacity_);
+		new(tmp_arr)T[capacity_];
 
-		if (size != 0) {
-			memory_copy(tmp_arr, data, size);
+		if (size_ != 0) {
+			memory_copy(tmp_arr, data_, size_);
 		}
-		if (new_size > size) {
-			for (size_t i{ size }; i != new_size; i++) {
+		if (new_size > size_) {
+			for (size_t i{ size_ }; i != new_size; i++) {
 				tmp_arr[i] = value;
 			}
 		}
 
 		delete_data();
-		data = tmp_arr;
-		size = new_size;
+		data_ = tmp_arr;
+		size_ = new_size;
 	}
 
 	void clear() {
-		size = 0;
+		size_ = 0;
 		delete_data();
 	}
 
 	T front() {
-		return { *data };
+		return { *data_ };
 	}
 	T back() {
-		return { *(data + size - 1) };
+		return { *(data_ + size_ - 1) };
 	}
 
 
 	void test_analize() noexcept {
 		std::cout << "CHECK: Empty? " << empty() << std::endl;
-		std::cout << "Capacity: " << capacity << std::endl;
-		std::cout << "Size: " << size << std::endl;
-		if (size != 0) {
+		std::cout << "Capacity: " << capacity_ << std::endl;
+		std::cout << "Size: " << size_ << std::endl;
+		if (size_ != 0) {
 			std::cout << "Print vector: \n";
 			if constexpr (std::is_same<std::pair<bool, const char*>, T>::value) {
 				print_pair();
@@ -268,18 +269,18 @@ public:
 	}
 
 private:
-	size_t capacity{ 4 };
-	T* data{};
-	size_t size{};
+	size_t capacity_{ 4 };
+	T* data_{};
+	size_t size_{};
 
 	void delete_data() {
-		if (size != 0) {
+		if (size_ != 0) {
 			if constexpr (std::is_constructible<T>::value) {
-				for (size_t i{}; i != size; i++) {
-					data[i].~T();
+				for (size_t i{}; i != size_; i++) {
+					data_[i].~T();
 				}
 			}
-			std::free(data);
+			std::free(data_);
 		}
 	}
 
@@ -308,13 +309,13 @@ private:
 	}
 
 	void print_pair() {
-		for (int i{}; i != size;i++) {
-			std::cout << data[i].first << data[i].second << std::endl;
+		for (int i{}; i != size_;i++) {
+			std::cout << data_[i].first << data_[i].second << std::endl;
 		}
 	}
 	void print_arithmetic() {
-		for (int i{}; i != size;i++) {
-			std::cout << data[i] << std::endl;
+		for (int i{}; i != size_;i++) {
+			std::cout << data_[i] << std::endl;
 		}
 	}
 };
