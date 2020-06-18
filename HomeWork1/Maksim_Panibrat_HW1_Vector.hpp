@@ -11,24 +11,19 @@ class Vector {
 public:
 	Vector() = default;
 	Vector(const size_t new_size) : capacity_{ new_size }, size_{ capacity_ } {
-		data_ = alloc_memory(capacity_);
-		new(data_)T[capacity_]{};
+		data_ = create_array(capacity_);
 	}
 	Vector(const size_t new_size, const T value) : capacity_{ new_size }, size_{ capacity_ } {
-		data_ = alloc_memory(capacity_);
-		new(data_)T[capacity_];
-
+		data_ = create_array(capacity_);
 		std::fill_n(data_, capacity_, value);
 	}
 	Vector(const std::initializer_list<T>& list) : Vector(list.size()) {
 		memory_copy(data_, list.begin(), list.size());
-		size_ = list.size();
 	}
 	Vector(const T* rhs_begin, const T* rhs_end) {
 		capacity_ = std::distance(rhs_begin, rhs_end);
 		size_ = capacity_;
-		data_ = alloc_memory(capacity_);
-		new(data_)T[capacity_];
+		data_ = create_array(capacity_);
 		memory_copy(data_, rhs_begin, capacity_);
 	}
 	Vector(const Vector<T>& rhs) : Vector<T>(rhs.size_) {
@@ -47,8 +42,7 @@ public:
 		if (this == &rhs) {
 			return *this;
 		}
-		T* tmp_arr = alloc_memory(rhs.capacity_);
-		new(tmp_arr)T[rhs.capacity_];
+		T* tmp_arr = create_array(rhs.capacity_);
 		memory_copy(tmp_arr, rhs.data_, rhs.size_);
 		delete_data();
 		capacity_ = rhs.capacity_;
@@ -98,8 +92,7 @@ public:
 		if (size_ == capacity_) {
 			capacity_ *= 2;
 		}
-		T* tmp_arr = alloc_memory(capacity_);
-		new(tmp_arr)T[capacity_];
+		T* tmp_arr = create_array(capacity_);
 		tmp_arr[0] = value;
 		memory_copy((tmp_arr + 1), data_, size_);
 		delete_data();
@@ -111,9 +104,7 @@ public:
 		if (size_ == capacity_) {
 			capacity_ *= 2;
 		}
-		T* tmp_arr = alloc_memory(capacity_);
-		new(tmp_arr)T[capacity_];
-
+		T* tmp_arr = create_array(capacity_);
 		memory_copy(tmp_arr, data_, size_);
 		tmp_arr[size_] = value;
 		delete_data();
@@ -134,8 +125,7 @@ public:
 		if (size_ == capacity_) {
 			capacity_ *= 2;
 		}
-		T* tmp_arr = alloc_memory(capacity_);
-		new(tmp_arr)T[capacity_];
+		T* tmp_arr = create_array(capacity_);
 		memory_copy(tmp_arr, data_, pos);
 		tmp_arr[pos] = value;
 		memory_copy((tmp_arr + pos + 1), (data_ + pos), (size_ - pos));
@@ -146,8 +136,7 @@ public:
 
 	void erase(size_t pos) {
 		pos--;
-		T* tmp_arr = alloc_memory(capacity_);
-		new(tmp_arr)T[capacity_];
+		T* tmp_arr = create_array(capacity_);
 		memory_copy(tmp_arr, data_, pos);
 		memory_copy((tmp_arr + pos), (data_ + pos + 1), (size_ - pos));
 		delete_data();
@@ -156,8 +145,7 @@ public:
 	}
 
 	void erase(T* pos) {
-		T* tmp_arr = alloc_memory(capacity_);
-		new(tmp_arr)T[capacity_];
+		T* tmp_arr = create_array(capacity_);
 		size_t distance_to_pos = std::distance(data_, pos);
 		memory_copy(tmp_arr, data_, distance_to_pos);
 		memory_copy((tmp_arr + distance_to_pos), (data_ + distance_to_pos + 1), (size_ - distance_to_pos));
@@ -167,8 +155,7 @@ public:
 	}
 
 	void erase(T* begin, T* end) {
-		T* tmp_arr = alloc_memory(capacity_);
-		new(tmp_arr)T[capacity_];
+		T* tmp_arr = create_array(capacity_);
 		size_t erase_distance = std::distance(begin, end);
 		size_t pos_start_erase = std::distance(data_, begin);
 		memory_copy(tmp_arr, data_, pos_start_erase);
@@ -179,9 +166,7 @@ public:
 	}
 
 	void reserve(const size_t new_cap) {
-		T* tmp_arr = alloc_memory(new_cap);
-		new(tmp_arr)T[capacity_];
-
+		T* tmp_arr = create_array(new_cap);
 		if (size_ != 0) {
 			memory_copy(tmp_arr, data_, size_);
 		}
@@ -201,8 +186,7 @@ public:
 		}
 
 		capacity_ = new_size;
-		T* tmp_arr = alloc_memory(capacity_);
-		new(tmp_arr)T[capacity_]{};
+		T* tmp_arr = create_array(capacity_);
 		if (size_ != 0) {
 			memory_copy(tmp_arr, data_, size_);
 		}
@@ -221,9 +205,7 @@ public:
 			size_ = new_size;
 		}
 		capacity_ = new_size;
-		T* tmp_arr = alloc_memory(capacity_);
-		new(tmp_arr)T[capacity_];
-
+		T* tmp_arr = create_array(capacity_);
 		if (size_ != 0) {
 			memory_copy(tmp_arr, data_, size_);
 		}
@@ -282,11 +264,12 @@ private:
 		}
 	}
 
-	T* alloc_memory(size_t needed_memory) {
+	T* create_array(size_t needed_memory) {
 		T* tmp_arr = (T*)std::malloc(needed_memory * sizeof(T));
 		if (tmp_arr == nullptr) {
 			throw std::bad_alloc();
 		}
+		new(tmp_arr)T[needed_memory]{};
 		return tmp_arr;
 	}
 };
