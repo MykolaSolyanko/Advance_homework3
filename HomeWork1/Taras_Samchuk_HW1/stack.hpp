@@ -11,8 +11,8 @@ class Stack {
   Stack(const size_t size) { proxy.reserve(size); };
   ~Stack() = default;
 
-  void push(const T& value) { proxy.push_front(value); };
-  T top() { return proxy.front(); };
+  void push(const T& value) { proxy.push_back(value); };
+  T top() { return proxy.back(); };
   T pop() {
     T tmp = top();
     proxy.erase(proxy.end());
