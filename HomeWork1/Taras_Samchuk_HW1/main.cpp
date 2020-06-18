@@ -16,7 +16,7 @@ using TypeForTest = int;
 constexpr size_t k_TryCount1{33};
 constexpr size_t k_TryCount2{50};
 constexpr size_t k_TestSize1{20};
-constexpr size_t k_TestSize2{10};
+// constexpr size_t k_TestSize2{10};
 
 // Parameters not used  -Wextra -Werror
 int main(/*int argc, char const *argv[]*/) {
@@ -55,11 +55,21 @@ int main(/*int argc, char const *argv[]*/) {
       TEST[i] = i * 10;
     }
     for (size_t i{0}; i < TEST.capacity(); i++) {
-      LogMessage("ellem[", i, "]=", TEST[i], " ");
+      if (!(i % 10)) {
+        LogMessage("\n");
+      }
+      LogMessage("el[", i, "]=", TEST[i], " ");
     }
-    LogMessage("\n");
+    LogMessage("\nTesting\n\tVectorTest2=VectorTest1;\n");
     Vector<TypeForTest> TEST2;
     TEST2 = TEST;
+    LogMessage("begin():", TEST2.begin(), "\n");
+    LogMessage("end():", TEST2.end(), "\n");
+    LogMessage("count():", TEST2.size(), "\n");
+    LogMessage("capacity():", TEST2.capacity(), "\n");
+
+    LogMessage("\nTesting\n\tVectorTest2=Vector<TypeForTest>(2);\n");
+    // TEST2 = Vector<TypeForTest>(2);
     LogMessage("begin():", TEST2.begin(), "\n");
     LogMessage("end():", TEST2.end(), "\n");
     LogMessage("count():", TEST2.size(), "\n");
@@ -78,16 +88,17 @@ int main(/*int argc, char const *argv[]*/) {
 
   {
     LogMessage("\t\t\tTest methods\n");
-    Stack<TypeForTest> test(k_TestSize2);
+    Stack<TypeForTest> test;
     LogMessage("Empty:", test.isEmpty(), " Count:", test.getCount(),
                " Size:", test.getMaxSize(), "\n");
     for (size_t i{0}; i < k_TryCount1; i++) {
+      LogMessage("test.push(", i, ") \n");
       test.push(i);
     };
     LogMessage("stack.top():", test.top(), "\n");
-    for (size_t i{0}; i < k_TryCount2; i++) {
+    do {
       LogMessage("test.pop():", test.pop(), " \n");
-    };
+    } while (test.isEmpty());
     LogMessage("\n");
   };
   return 0;
