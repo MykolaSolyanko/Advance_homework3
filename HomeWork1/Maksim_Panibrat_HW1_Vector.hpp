@@ -18,16 +18,16 @@ public:
 		std::fill_n(data_, capacity_, value);
 	}
 	Vector(const std::initializer_list<T>& list) : Vector(list.size()) {
-		memory_copy(data_, list.begin(), list.size());
+		memory_copy(data_, list.begin(), list.end());
 	}
 	Vector(const T* rhs_begin, const T* rhs_end) {
 		capacity_ = std::distance(rhs_begin, rhs_end);
 		size_ = capacity_;
 		data_ = create_array(capacity_);
-		memory_copy(data_, rhs_begin, capacity_);
+		memory_copy(data_, rhs_begin, rhs_end);
 	}
 	Vector(const Vector<T>& rhs) : Vector<T>(rhs.size_) {
-		memory_copy(data_, rhs.data_, rhs.size_);
+		memory_copy(data_, rhs.begin(), rhs.end());
 	}
 	Vector(Vector<T>&& rhs) noexcept : capacity_{ rhs.capacity_ }, size_{ rhs.size_ }, data_{ rhs.data_ } {
 		rhs.data_ = nullptr;
@@ -43,7 +43,7 @@ public:
 			return *this;
 		}
 		T* tmp_arr = create_array(rhs.capacity_);
-		memory_copy(tmp_arr, rhs.data_, rhs.size_);
+		memory_copy(tmp_arr, rhs.begin(), rhs.end());
 		delete_data();
 		capacity_ = rhs.capacity_;
 		size_ = rhs.size_;
@@ -87,6 +87,12 @@ public:
 	T* end() {
 		return { data_ + size_ };
 	}
+	T* begin() const {
+		return { data_ };
+	}
+	T* end() const {
+		return { data_ + size_ };
+	}
 
 	void push_front(const T value) {
 		if (size_ == capacity_) {
@@ -94,7 +100,7 @@ public:
 		}
 		T* tmp_arr = create_array(capacity_);
 		tmp_arr[0] = value;
-		memory_copy((tmp_arr + 1), data_, size_);
+		memory_copy(tmp_arr + 1, data_, end());
 		delete_data();
 		data_ = tmp_arr;
 		size_++;
@@ -105,7 +111,7 @@ public:
 			capacity_ *= 2;
 		}
 		T* tmp_arr = create_array(capacity_);
-		memory_copy(tmp_arr, data_, size_);
+		memory_copy(tmp_arr, data_, end());
 		tmp_arr[size_] = value;
 		delete_data();
 		data_ = tmp_arr;
@@ -126,9 +132,9 @@ public:
 			capacity_ *= 2;
 		}
 		T* tmp_arr = create_array(capacity_);
-		memory_copy(tmp_arr, data_, pos);
+		memory_copy(tmp_arr, data_, data_ + pos);
 		tmp_arr[pos] = value;
-		memory_copy((tmp_arr + pos + 1), (data_ + pos), (size_ - pos));
+		memory_copy(tmp_arr + pos + 1, data_ + pos, end());
 		delete_data();
 		data_ = tmp_arr;
 		size_++;
@@ -137,8 +143,8 @@ public:
 	void erase(size_t pos) {
 		pos--;
 		T* tmp_arr = create_array(capacity_);
-		memory_copy(tmp_arr, data_, pos);
-		memory_copy((tmp_arr + pos), (data_ + pos + 1), (size_ - pos));
+		memory_copy(tmp_arr, data_, data_ + pos);
+		memory_copy((tmp_arr + pos), data_ + pos + 1, end());
 		delete_data();
 		data_ = tmp_arr;
 		size_--;
@@ -146,9 +152,10 @@ public:
 
 	void erase(T* pos) {
 		T* tmp_arr = create_array(capacity_);
-		size_t distance_to_pos = std::distance(data_, pos);
-		memory_copy(tmp_arr, data_, distance_to_pos);
-		memory_copy((tmp_arr + distance_to_pos), (data_ + distance_to_pos + 1), (size_ - distance_to_pos));
+		memory_copy(tmp_arr, data_, pos);
+		if (pos != end()) {
+			memory_copy((tmp_arr + std::distance(data_, pos)), pos + 1, end());
+		}
 		delete_data();
 		data_ = tmp_arr;
 		size_--;
@@ -156,19 +163,17 @@ public:
 
 	void erase(T* begin, T* end) {
 		T* tmp_arr = create_array(capacity_);
-		size_t erase_distance = std::distance(begin, end);
-		size_t pos_start_erase = std::distance(data_, begin);
-		memory_copy(tmp_arr, data_, pos_start_erase);
-		memory_copy(tmp_arr + pos_start_erase, end, (size_ - erase_distance));
+		memory_copy(tmp_arr, data_, begin);
+		memory_copy(tmp_arr + std::distance(data_, begin), end, data_ + size_);
 		delete_data();
 		data_ = tmp_arr;
-		size_ -= erase_distance;
+		size_ -= std::distance(begin, end);;
 	}
 
 	void reserve(const size_t new_cap) {
 		T* tmp_arr = create_array(new_cap);
 		if (size_ != 0) {
-			memory_copy(tmp_arr, data_, size_);
+			memory_copy(tmp_arr, data_, end());
 		}
 		delete_data();
 		data_ = tmp_arr;
@@ -188,7 +193,7 @@ public:
 		capacity_ = new_size;
 		T* tmp_arr = create_array(capacity_);
 		if (size_ != 0) {
-			memory_copy(tmp_arr, data_, size_);
+			memory_copy(tmp_arr, data_, end());
 		}
 		delete_data();
 		data_ = tmp_arr;
@@ -207,7 +212,7 @@ public:
 		capacity_ = new_size;
 		T* tmp_arr = create_array(capacity_);
 		if (size_ != 0) {
-			memory_copy(tmp_arr, data_, size_);
+			memory_copy(tmp_arr, data_, data_ + size_);
 		}
 		if (new_size > size_) {
 			for (size_t i{ size_ }; i != new_size; i++) {
@@ -248,18 +253,34 @@ private:
 		}
 	}
 
-	void memory_copy(T* destination, const T* source, const size_t copy_size) {
+	void memory_copy(T* destination, T* source_begin, T* source_end) {
 		if constexpr (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
-			std::memcpy(destination, source, copy_size * sizeof(T));
+			std::memcpy(destination, source_begin, std::distance(source_begin, source_end) * sizeof(T));
 		}
 		else if constexpr (std::is_nothrow_move_constructible<T>::value) {
-			for (size_t i{}; i != copy_size;i++) {
-				destination[i] = std::move(source[i]);
+			for (; source_begin != source_end; destination++, source_begin++) {
+				*destination = std::move(*source_begin);
 			}
 		}
 		else {
-			for (size_t i{}; i != copy_size;i++) {
-				destination[i] = source[i];
+			for (; source_begin != source_end; destination++, source_begin++) {
+				*destination = *source_begin;
+			}
+		}
+	}
+
+	void memory_copy(T* destination, const T* source_begin, const T* source_end) {
+		if constexpr (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
+			std::memcpy(destination, source_begin, std::distance(source_begin, source_end) * sizeof(T));
+		}
+		else if constexpr (std::is_nothrow_move_constructible<T>::value) {
+			for (; source_begin != source_end; destination++, source_begin++) {
+				*destination = std::move(*source_begin);
+			}
+		}
+		else {
+			for (; source_begin != source_end; destination++, source_begin++) {
+				*destination = *source_begin;
 			}
 		}
 	}
