@@ -59,8 +59,12 @@ class Vector {
       return *this;
     }
     T* buffer = new T[other._capacity]{};
-    for (size_t index{0}; index < other._count; index++) {
-      buffer[index] = other._data[index];
+    if constexpr (std::is_trivial<T>::value) {
+        memcpy(buffer, other._data, other._count * sizeof(T));
+    } else {
+      for (size_t index{0}; index < other._count; index++) {
+        buffer[index] = other._data[index];
+      }
     }
     _capacity = other._capacity;
     _count = other._capacity;
@@ -71,7 +75,7 @@ class Vector {
 
   // methods
   T* begin() { return _data; }
-  const T* end() { return (_data + _count); }
+  T* end() { return (_data + _count); }
 
   void push_front(T value) {
     if ((_count + 1) >= _capacity) {
@@ -181,15 +185,15 @@ class Vector {
     return _data;
   }
 
-  T back() { return _data[0]; }
+  T back() { return _data[_count - 1]; }
 
-  T front() { return _data[_count - 1]; }
+  T front() { return _data[0]; }
 
   T& operator[](size_t pos) { return _data[pos]; }
 
   const T& operator[](size_t pos) const { return _data[pos]; }
 
-  void resize(size_t count) { reserve(_count + count); }
+  void resize(size_t count) { reserve(count); }
 
   void reserve(size_t new_cap) {
     if (new_cap <= _count) {
