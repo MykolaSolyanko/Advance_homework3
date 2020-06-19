@@ -9,21 +9,19 @@
 template <typename T>
 class Vector {
 public:
-	Vector() = default;
+	Vector() {
+		data_ = create_array(capacity_);
+	}
 	Vector(const size_t new_size) : capacity_{ new_size }, size_{ capacity_ } {
 		data_ = create_array(capacity_);
 	}
-	Vector(const size_t new_size, const T value) : capacity_{ new_size }, size_{ capacity_ } {
-		data_ = create_array(capacity_);
+	Vector(const size_t new_size, const T value) : Vector(new_size) {
 		std::fill_n(data_, capacity_, value);
 	}
 	Vector(const std::initializer_list<T>& list) : Vector(list.size()) {
 		memory_copy(data_, list.begin(), list.end());
 	}
-	Vector(const T* rhs_begin, const T* rhs_end) {
-		capacity_ = std::distance(rhs_begin, rhs_end);
-		size_ = capacity_;
-		data_ = create_array(capacity_);
+	Vector(const T* rhs_begin, const T* rhs_end) : Vector(std::distance(rhs_begin, rhs_end)) {
 		memory_copy(data_, rhs_begin, rhs_end);
 	}
 	Vector(const Vector<T>& rhs) : Vector<T>(rhs.size_) {
@@ -103,19 +101,16 @@ public:
 		memory_copy(tmp_arr + 1, data_, end());
 		delete_data();
 		data_ = tmp_arr;
-		size_++;
+		++size_;
 	}
 
 	void push_back(const T value) {
 		if (size_ == capacity_) {
 			capacity_ *= 2;
+			reserve(capacity_);
 		}
-		T* tmp_arr = create_array(capacity_);
-		memory_copy(tmp_arr, data_, end());
-		tmp_arr[size_] = value;
-		delete_data();
-		data_ = tmp_arr;
-		size_++;
+		data_[size_] = value;
+		++size_;
 	}
 
 	template <typename ... Rest>
@@ -124,47 +119,42 @@ public:
 	}
 
 	void insert(size_t pos, const T value) {
-		// cause of pos{0} which == data[0] causes error: cant identify which function need to be called
-		// then pos{1} = data[0], pos{2} = data[1]  
-		pos--;
-
 		if (size_ == capacity_) {
 			capacity_ *= 2;
+			reserve(capacity_);
 		}
-		T* tmp_arr = create_array(capacity_);
-		memory_copy(tmp_arr, data_, data_ + pos);
-		tmp_arr[pos] = value;
-		memory_copy(tmp_arr + pos + 1, data_ + pos, end());
-		delete_data();
-		data_ = tmp_arr;
-		size_++;
+		for (size_t i{ size_ }; i != pos; i--) {
+			data_[i] = data_[i - 1];
+		}
+		data_[pos] = value;
+		++size_;
 	}
 
 	void erase(size_t pos) {
 		pos--;
 		T* tmp_arr = create_array(capacity_);
 		memory_copy(tmp_arr, data_, data_ + pos);
-		memory_copy((tmp_arr + pos), data_ + pos + 1, end());
+		memory_copy(tmp_arr + pos, data_ + pos + 1, end());
 		delete_data();
 		data_ = tmp_arr;
-		size_--;
+		--size_;
 	}
 
 	void erase(T* pos) {
 		T* tmp_arr = create_array(capacity_);
 		memory_copy(tmp_arr, data_, pos);
 		if (pos != end()) {
-			memory_copy((tmp_arr + std::distance(data_, pos)), pos + 1, end());
+			memory_copy(tmp_arr + std::distance(data_, pos), pos + 1, end());
 		}
 		delete_data();
 		data_ = tmp_arr;
-		size_--;
+		--size_;
 	}
 
 	void erase(T* begin, T* end) {
 		T* tmp_arr = create_array(capacity_);
 		memory_copy(tmp_arr, data_, begin);
-		memory_copy(tmp_arr + std::distance(data_, begin), end, data_ + size_);
+		memory_copy(tmp_arr + std::distance(data_, begin), end, this->end());
 		delete_data();
 		data_ = tmp_arr;
 		size_ -= std::distance(begin, end);;
@@ -212,7 +202,7 @@ public:
 		capacity_ = new_size;
 		T* tmp_arr = create_array(capacity_);
 		if (size_ != 0) {
-			memory_copy(tmp_arr, data_, data_ + size_);
+			memory_copy(tmp_arr, data_, end());
 		}
 		if (new_size > size_) {
 			for (size_t i{ size_ }; i != new_size; i++) {
@@ -238,7 +228,7 @@ public:
 	}
 
 private:
-	size_t capacity_{ 4 };
+	size_t capacity_{ 1 };
 	T* data_{};
 	size_t size_{};
 
