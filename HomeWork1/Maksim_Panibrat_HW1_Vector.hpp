@@ -92,24 +92,22 @@ public:
 		return { data_ + size_ };
 	}
 
-	void push_front(const T value) {
-		if (size_ == capacity_) {
-			capacity_ *= 2;
-		}
-		T* tmp_arr = create_array(capacity_);
-		tmp_arr[0] = value;
-		memory_copy(tmp_arr + 1, data_, end());
-		delete_data();
-		data_ = tmp_arr;
-		++size_;
-	}
-
-	void push_back(const T value) {
+	void push_front(T value) {
 		if (size_ == capacity_) {
 			capacity_ *= 2;
 			reserve(capacity_);
 		}
-		data_[size_] = value;
+		free_space_for_element(data_, end());
+		place_element(0, value);
+		++size_;
+	}
+
+	void push_back(T value) {
+		if (size_ == capacity_) {
+			capacity_ *= 2;
+			reserve(capacity_);
+		}
+		place_element(size_, value);
 		++size_;
 	}
 
@@ -118,15 +116,13 @@ public:
 		push_back(T{ rest... });
 	}
 
-	void insert(size_t pos, const T value) {
+	void insert(const size_t pos, T value) {
 		if (size_ == capacity_) {
 			capacity_ *= 2;
 			reserve(capacity_);
 		}
-		for (size_t i{ size_ }; i != pos; i--) {
-			data_[i] = data_[i - 1];
-		}
-		data_[pos] = value;
+		free_space_for_element(data_ + pos, end());
+		place_element(pos, value);
 		++size_;
 	}
 
@@ -243,6 +239,15 @@ private:
 		}
 	}
 
+	void place_element(const size_t pos, T& value) {
+		if constexpr (std::is_nothrow_move_constructible<T>::value) {
+			data_[pos] = std::move(value);
+		}
+		else {
+			data_[pos] = value;
+		}
+	}
+
 	void memory_copy(T* destination, T* source_begin, T* source_end) {
 		if constexpr (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
 			std::memcpy(destination, source_begin, std::distance(source_begin, source_end) * sizeof(T));
@@ -271,6 +276,19 @@ private:
 		else {
 			for (; source_begin != source_end; destination++, source_begin++) {
 				*destination = *source_begin;
+			}
+		}
+	}
+
+	void free_space_for_element(T* begin, T* end) {
+		if constexpr (std::is_nothrow_move_constructible<T>::value) {
+			for (; end != begin; end--) {
+				*end = std::move(*(end - 1));
+			}
+		}
+		else {
+			for (; end != begin; end--) {
+				*end = *(end - 1);
 			}
 		}
 	}
