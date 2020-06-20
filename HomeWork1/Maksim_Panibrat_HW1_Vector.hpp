@@ -5,7 +5,7 @@
 #include <initializer_list>
 #include <algorithm>
 #include <type_traits>
-#include <utility>
+#include <utility> // for std::forward
 
 template <typename T>
 class Vector {
@@ -160,6 +160,9 @@ public:
 	}
 
 	void reserve(const size_t new_cap) {
+		if (new_cap <= capacity_) {
+			return;
+		}
 		T* tmp_arr = create_array(new_cap);
 		if (size_ != 0) {
 			memory_copy(tmp_arr, data_, end());
@@ -242,7 +245,7 @@ private:
 		}
 	}
 
-	void place_element(const size_t pos, T value) {
+	void place_element(const size_t pos, T value) noexcept {
 		if constexpr (std::is_nothrow_move_constructible<T>::value) {
 			data_[pos] = std::move(value);
 		}
@@ -251,7 +254,7 @@ private:
 		}
 	}
 
-	void memory_copy(T* destination, T* source_begin, T* source_end) {
+	void memory_copy(T* destination, T* source_begin, T* source_end) noexcept {
 		if constexpr (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
 			std::memcpy(destination, source_begin, std::distance(source_begin, source_end) * sizeof(T));
 		}
@@ -267,7 +270,7 @@ private:
 		}
 	}
 
-	void memory_copy(T* destination, const T* source_begin, const T* source_end) {
+	void memory_copy(T* destination, const T* source_begin, const T* source_end) noexcept {
 		if constexpr (std::is_trivially_constructible<T>::value || std::is_fundamental<T>::value) {
 			std::memcpy(destination, source_begin, std::distance(source_begin, source_end) * sizeof(T));
 		}
@@ -283,7 +286,7 @@ private:
 		}
 	}
 
-	void free_space_for_element(T* begin, T* end) {
+	void free_space_for_element(T* begin, T* end) noexcept {
 		if constexpr (std::is_nothrow_move_constructible<T>::value) {
 			for (; end != begin; end--) {
 				*end = std::move(*(end - 1));
