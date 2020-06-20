@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <algorithm>
 #include <type_traits>
+#include <utility>
 
 template <typename T>
 class Vector {
@@ -33,7 +34,7 @@ public:
 		rhs.capacity_ = 0;
 	}
 	~Vector() {
-		delete_data();
+		free_data();
 	}
 
 	Vector& operator=(const Vector<T>& rhs) {
@@ -42,7 +43,7 @@ public:
 		}
 		T* tmp_arr = create_array(rhs.capacity_);
 		memory_copy(tmp_arr, rhs.begin(), rhs.end());
-		delete_data();
+		free_data();
 		capacity_ = rhs.capacity_;
 		size_ = rhs.size_;
 		data_ = tmp_arr;
@@ -113,7 +114,7 @@ public:
 
 	template <typename ... Rest>
 	void emplace_back(Rest&&... rest) {
-		push_back(T{ rest... });
+		push_back({ std::forward<Rest>(rest)... });
 	}
 
 	void insert(const size_t pos, T value) {
@@ -127,32 +128,34 @@ public:
 	}
 
 	void erase(size_t pos) {
-		pos--;
-		T* tmp_arr = create_array(capacity_);
-		memory_copy(tmp_arr, data_, data_ + pos);
-		memory_copy(tmp_arr + pos, data_ + pos + 1, end());
-		delete_data();
-		data_ = tmp_arr;
+		if constexpr (std::is_constructible<T>::value) {
+			data_[pos].~T();
+		}
+		if (pos != size_) {
+			memory_copy(data_ + pos, data_ + pos + 1, end());
+		}
 		--size_;
 	}
 
 	void erase(T* pos) {
-		T* tmp_arr = create_array(capacity_);
-		memory_copy(tmp_arr, data_, pos);
-		if (pos != end()) {
-			memory_copy(tmp_arr + std::distance(data_, pos), pos + 1, end());
+		if constexpr (std::is_constructible<T>::value) {
+			pos->~T();
 		}
-		delete_data();
-		data_ = tmp_arr;
+		if (pos != end()) {
+			memory_copy(pos, pos + 1, end());
+		}
 		--size_;
 	}
 
 	void erase(T* begin, T* end) {
-		T* tmp_arr = create_array(capacity_);
-		memory_copy(tmp_arr, data_, begin);
-		memory_copy(tmp_arr + std::distance(data_, begin), end, this->end());
-		delete_data();
-		data_ = tmp_arr;
+		if constexpr (std::is_constructible<T>::value) {
+			for (T* delete_begin{ begin }; delete_begin != end; delete_begin++) {
+				delete_begin->~T();
+			}
+		}
+		if (end != this->end()) {
+			memory_copy(begin, end, this->end());
+		}
 		size_ -= std::distance(begin, end);;
 	}
 
@@ -161,7 +164,7 @@ public:
 		if (size_ != 0) {
 			memory_copy(tmp_arr, data_, end());
 		}
-		delete_data();
+		free_data();
 		data_ = tmp_arr;
 		capacity_ = new_cap;
 	}
@@ -181,7 +184,7 @@ public:
 		if (size_ != 0) {
 			memory_copy(tmp_arr, data_, end());
 		}
-		delete_data();
+		free_data();
 		data_ = tmp_arr;
 		size_ = new_size;
 	}
@@ -206,14 +209,14 @@ public:
 			}
 		}
 
-		delete_data();
+		free_data();
 		data_ = tmp_arr;
 		size_ = new_size;
 	}
 
 	void clear() {
 		size_ = 0;
-		delete_data();
+		free_data();
 	}
 
 	T front() {
@@ -228,7 +231,7 @@ private:
 	T* data_{};
 	size_t size_{};
 
-	void delete_data() {
+	void free_data() {
 		if (size_ != 0) {
 			if constexpr (std::is_constructible<T>::value) {
 				for (size_t i{}; i != size_; i++) {
@@ -239,7 +242,7 @@ private:
 		}
 	}
 
-	void place_element(const size_t pos, T& value) {
+	void place_element(const size_t pos, T value) {
 		if constexpr (std::is_nothrow_move_constructible<T>::value) {
 			data_[pos] = std::move(value);
 		}
