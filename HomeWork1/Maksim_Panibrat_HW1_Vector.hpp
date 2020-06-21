@@ -95,8 +95,7 @@ public:
 
 	void push_front(T value) {
 		if (size_ == capacity_) {
-			capacity_ *= 2;
-			reserve(capacity_);
+			reserve(capacity_ * 2);
 		}
 		free_space_for_element(data_, end());
 		place_element(0, value);
@@ -105,8 +104,7 @@ public:
 
 	void push_back(T value) {
 		if (size_ == capacity_) {
-			capacity_ *= 2;
-			reserve(capacity_);
+			reserve(capacity_ * 2);
 		}
 		place_element(size_, value);
 		++size_;
@@ -119,8 +117,7 @@ public:
 
 	void insert(const size_t pos, T value) {
 		if (size_ == capacity_) {
-			capacity_ *= 2;
-			reserve(capacity_);
+			reserve(capacity_ * 2);
 		}
 		free_space_for_element(data_ + pos, end());
 		place_element(pos, value);
@@ -218,8 +215,8 @@ public:
 	}
 
 	void clear() {
-		size_ = 0;
 		free_data();
+		size_ = 0;
 	}
 
 	T front() {
