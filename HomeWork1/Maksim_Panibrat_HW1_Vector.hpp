@@ -7,12 +7,15 @@
 #include <type_traits>
 #include <utility> // for std::forward
 
+namespace {
+	constexpr size_t kStartingCapacity{ 1 };
+	constexpr size_t kGrowFactor{ 2 };
+}
+
 template <typename T>
 class Vector {
 public:
-	Vector() {
-		data_ = create_array(capacity_);
-	}
+	Vector() = default;
 	Vector(const size_t new_size) : capacity_{ new_size }, size_{ capacity_ } {
 		data_ = create_array(capacity_);
 	}
@@ -95,7 +98,7 @@ public:
 
 	void push_front(T value) {
 		if (size_ == capacity_) {
-			reserve(capacity_ * 2);
+			reserve((capacity_ == 0) ? kStartingCapacity : capacity_ * kGrowFactor);
 		}
 		free_space_for_element(data_, end());
 		place_element(0, value);
@@ -104,7 +107,7 @@ public:
 
 	void push_back(T value) {
 		if (size_ == capacity_) {
-			reserve(capacity_ * 2);
+			reserve((capacity_ == 0) ? kStartingCapacity : capacity_ * kGrowFactor);
 		}
 		place_element(size_, value);
 		++size_;
@@ -117,7 +120,7 @@ public:
 
 	void insert(const size_t pos, T value) {
 		if (size_ == capacity_) {
-			reserve(capacity_ * 2);
+			reserve((capacity_ == 0) ? kStartingCapacity : capacity_ * kGrowFactor);
 		}
 		free_space_for_element(data_ + pos, end());
 		place_element(pos, value);
@@ -215,7 +218,11 @@ public:
 	}
 
 	void clear() {
-		free_data();
+		if constexpr (std::is_constructible<T>::value) {
+			for (size_t i{}; i != size_; i++) {
+				data_[i].~T();
+			}
+		}
 		size_ = 0;
 	}
 
@@ -227,7 +234,7 @@ public:
 	}
 
 private:
-	size_t capacity_{ 1 };
+	size_t capacity_{};
 	T* data_{};
 	size_t size_{};
 
